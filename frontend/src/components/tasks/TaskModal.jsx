@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, AlertCircle, Clock, Tag, MessageSquare, History } from 'lucide-react';
+import { Send, AlertCircle, Clock, Tag, MessageSquare, History, Trash2 } from 'lucide-react';
 import { AttachmentPanel } from './AttachmentPanel.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { StatusBadge, PriorityBadge } from '../ui/StatusBadge.jsx';
@@ -12,13 +12,14 @@ import { useToast } from '../../contexts/ToastContext.jsx';
 
 const ALL_STATUSES = Object.keys(STATUS_LABELS);
 
-export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobrar }) {
+export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobrar, onDelete }) {
   const { user }  = useAuth();
   const toast     = useToast();
 
   const [comment,  setComment ] = useState('');
   const [sending,  setSending ] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isManager    = user?.isAdmin || user?.isManager;
   const delayDays    = getDelayDays(task);
@@ -46,6 +47,17 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
     finally { setSending(false); }
   }
 
+  async function handleDelete() {
+    if (!confirm(`Excluir a tarefa "${task.title}"? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    try {
+      await onDelete(task.id);
+    } catch {
+      toast('Erro ao excluir tarefa', 'error');
+      setDeleting(false);
+    }
+  }
+
   async function handleCobrar() {
     try {
       await onCobrar(task.id);
@@ -61,8 +73,20 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
       size="lg"
       footer={
         <>
+          {/* Excluir — admin, manager ou criador da tarefa */}
+          {(isManager || task.fromId === user?.id) && onDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="btn btn-sm gap-1.5 mr-auto text-danger border-danger/30 bg-danger/10 hover:bg-danger/20"
+            >
+              {deleting ? <Spinner size={13} /> : <Trash2 size={13} />}
+              Excluir tarefa
+            </button>
+          )}
+
           {isManager && !['concluida','cancelada'].includes(task.status) && (
-            <button onClick={handleCobrar} className="btn-danger btn-sm mr-auto">
+            <button onClick={handleCobrar} className="btn-danger btn-sm">
               <AlertCircle size={13} /> Cobrar atualização
             </button>
           )}

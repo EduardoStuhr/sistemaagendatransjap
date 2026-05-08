@@ -10,7 +10,7 @@ export function AppLayout() {
   const [showCreate, setShowCreate] = useState(false);
   const [selected,   setSelected  ] = useState(null);
 
-  const { tasks, loading, createTask, changeStatus, addComment, cobrar } = useTasks();
+  const { tasks, loading, createTask, changeStatus, addComment, cobrar, removeTask } = useTasks();
 
   const pendingCount = tasks.filter(t => !['concluida','cancelada'].includes(t.status)).length;
 
@@ -44,6 +44,7 @@ export function AppLayout() {
           onStatusChange={changeStatus}
           onAddComment={addComment}
           onCobrar={cobrar}
+          onDelete={async (id) => { await removeTask(id); setSelected(null); }}
         />
       )}
     </div>
