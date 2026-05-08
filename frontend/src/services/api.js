@@ -52,6 +52,17 @@ export const taskService = {
   cobrar:       (id)         => api.post(`/tasks/${id}/cobrar`).then(r => r.data),
 };
 
+export const attachmentService = {
+  upload:   (taskId, files) => {
+    const fd = new FormData();
+    files.forEach(f => fd.append('files', f));
+    return api.post(`/tasks/${taskId}/attachments`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+  },
+  list:     (taskId)  => api.get(`/tasks/${taskId}/attachments`).then(r => r.data),
+  remove:   (id)      => api.delete(`/attachments/${id}`).then(r => r.data),
+  downloadUrl: (id)   => `/api/attachments/${id}/download`,
+};
+
 export const despesaService = {
   upload:    (formData)    => api.post('/despesas/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data),
   listar:    (params)      => api.get('/despesas', { params }).then(r => r.data),

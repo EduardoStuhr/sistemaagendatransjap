@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Send, AlertCircle, Clock, User, Tag, MessageSquare, History } from 'lucide-react';
+import { Send, AlertCircle, Clock, Tag, MessageSquare, History } from 'lucide-react';
+import { AttachmentPanel } from './AttachmentPanel.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { StatusBadge, PriorityBadge } from '../ui/StatusBadge.jsx';
 import { Avatar } from '../ui/Avatar.jsx';
@@ -150,6 +151,14 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
             </div>
           </div>
         )}
+
+        {/* Attachments */}
+        <div className="border-t border-base-500 pt-4">
+          <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest mb-3 flex items-center gap-1">
+            <span>Anexos</span>
+          </p>
+          <AttachmentPanel task={task} />
+        </div>
 
         {/* Comments */}
         <div>

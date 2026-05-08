@@ -11,6 +11,7 @@ import { taskRoutes } from './routes/task.routes.js';
 import { notificationRoutes } from './routes/notification.routes.js';
 import { partRoutes } from './routes/part.routes.js';
 import { despesaRoutes } from './routes/despesa.routes.js';
+import { attachmentRoutes } from './routes/attachment.routes.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { initSocket } from './socket/socket.js';
 import { setIo } from './lib/io.js';
@@ -30,8 +31,10 @@ const allowedOrigins = config.clientUrl
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Permite requisições sem origin (apps mobile, curl em dev)
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    // Em dev permite qualquer localhost (http ou https, qualquer porta)
+    if (!config.isProd && /^https?:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
     cb(new Error(`CORS bloqueado para: ${origin}`));
   },
   credentials: true,
@@ -72,6 +75,7 @@ app.use('/api/tasks',         taskRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/parts',         partRoutes);
 app.use('/api/despesas',      despesaRoutes);
+app.use('/api',               attachmentRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', env: config.isProd ? 'production' : 'development' }));
 

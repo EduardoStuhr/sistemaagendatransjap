@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Paperclip, X } from 'lucide-react';
 import { Modal } from '../ui/Modal.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 import { useToast } from '../../contexts/ToastContext.jsx';
-import { userService } from '../../services/api.js';
+import { userService, attachmentService } from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { CATEGORY_LABELS } from '../../utils/format.js';
 
@@ -30,6 +31,8 @@ export function CreateTaskModal({ onClose, onCreate }) {
   const [users,    setUsers  ] = useState([]);
   const [loading,  setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [files,    setFiles  ] = useState([]);
+  const fileRef = useRef();
 
   useEffect(() => {
     userService.list()
@@ -48,6 +51,15 @@ export function CreateTaskModal({ onClose, onCreate }) {
     }));
   }
 
+  function onPickFiles(e) {
+    const picked = Array.from(e.target.files || []);
+    setFiles(prev => {
+      const existing = new Set(prev.map(f => f.name + f.size));
+      return [...prev, ...picked.filter(f => !existing.has(f.name + f.size))];
+    });
+    e.target.value = '';
+  }
+
   async function handleCreate() {
     if (!form.title.trim()) { toast('Título obrigatório', 'warning'); return; }
 
@@ -59,7 +71,7 @@ export function CreateTaskModal({ onClose, onCreate }) {
 
     setLoading(true);
     try {
-      await onCreate({
+      const task = await onCreate({
         title:       form.title.trim(),
         description: form.description.trim() || undefined,
         priority:    form.priority,
@@ -67,6 +79,10 @@ export function CreateTaskModal({ onClose, onCreate }) {
         dueDate:     form.dueDate || undefined,
         recipientIds,
       });
+      // Faz upload dos arquivos selecionados
+      if (files.length > 0 && task?.id) {
+        await attachmentService.upload(task.id, files).catch(() => {});
+      }
       toast('Tarefa criada com sucesso!', 'success');
       onClose();
     } catch { toast('Erro ao criar tarefa', 'error'); }
@@ -121,6 +137,31 @@ export function CreateTaskModal({ onClose, onCreate }) {
         <div>
           <label className="label">Prazo</label>
           <input type="date" className="input" value={form.dueDate} onChange={set('dueDate')} />
+        </div>
+
+        {/* Anexos */}
+        <div>
+          <label className="label">Anexos (opcional)</label>
+          <input ref={fileRef} type="file" multiple className="hidden"
+            accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.webp"
+            onChange={onPickFiles} />
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="btn btn-ghost btn-sm gap-2 w-full border-dashed border-base-400 hover:border-brand/50">
+            <Paperclip size={13} /> Selecionar arquivos para anexar
+          </button>
+          {files.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-600 text-xs">
+                  <Paperclip size={11} className="text-base-200 flex-shrink-0" />
+                  <span className="flex-1 truncate text-base-100">{f.name}</span>
+                  <span className="text-base-200 flex-shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                  <button type="button" onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
+                    className="text-base-200 hover:text-danger p-0.5"><X size={11} /></button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Target */}

@@ -28,6 +28,7 @@ model User {
   taskViews      TaskView[]
   despesas       Despesa[]
   importacoes    ImportacaoDespesa[]
+  attachments    TaskAttachment[]
 }
 
 model Task {
@@ -44,10 +45,11 @@ model Task {
   fromId Int
   from   User @relation("TaskFrom", fields: [fromId], references: [id])
 
-  recipients TaskRecipient[]
-  comments   Comment[]
-  history    TaskHistory[]
-  views      TaskView[]
+  recipients   TaskRecipient[]
+  comments     Comment[]
+  history      TaskHistory[]
+  views        TaskView[]
+  attachments  TaskAttachment[]
 }
 
 model TaskRecipient {
@@ -103,6 +105,20 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TaskAttachment {
+  id           Int      @id @default(autoincrement())
+  taskId       Int
+  uploadedById Int
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  storagePath  String
+  createdAt    DateTime @default(now())
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
 }
 
 model Part {
