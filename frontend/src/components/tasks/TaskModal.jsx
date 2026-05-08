@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Send, AlertCircle, Clock, Tag, MessageSquare, History, Trash2 } from 'lucide-react';
+import { Send, AlertCircle, Clock, Tag, MessageSquare, History, Trash2, FileDown } from 'lucide-react';
+import { exportTaskPDF } from '../../utils/exportTaskPDF.js';
 import { AttachmentPanel } from './AttachmentPanel.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { StatusBadge, PriorityBadge } from '../ui/StatusBadge.jsx';
@@ -90,6 +91,13 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
               <AlertCircle size={13} /> Cobrar atualização
             </button>
           )}
+          <button
+            onClick={() => exportTaskPDF(task)}
+            className="btn btn-ghost btn-sm gap-1.5"
+            title="Exportar PDF"
+          >
+            <FileDown size={13} /> Exportar PDF
+          </button>
           <button onClick={onClose} className="btn-ghost btn-sm">Fechar</button>
         </>
       }

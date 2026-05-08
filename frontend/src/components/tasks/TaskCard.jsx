@@ -12,18 +12,20 @@ export function TaskCard({ task, onClick, currentUserId }) {
                      !task.views?.some(v => v.userId === currentUserId);
   const isCritical = task.priority === 'critica';
 
+  const isDelayed = delayLevel !== 'none';
+
   return (
     <div
       onClick={onClick}
       className={`card-hover cursor-pointer relative overflow-hidden p-0
-                  ${isCritical ? 'animate-pulse-red' : ''}
-                  ${delayLevel !== 'none' ? ds.border : ''}`}
+                  ${isCritical || ds.animate ? 'animate-pulse-red' : ''}
+                  ${isDelayed ? `${ds.border} ${ds.cardBg}` : ''}`}
+      style={ds.cardShadow ? { boxShadow: ds.cardShadow } : undefined}
     >
-      {/* Priority accent */}
+      {/* Priority / delay accent */}
       <div className="flex">
-        <div className={`w-1 flex-shrink-0 rounded-l-xl`}
-             style={{ background: isCritical ? '#f85149' : delayLevel !== 'none' ? undefined : undefined,
-                      backgroundColor: getPriorityColor(task.priority) }} />
+        <div className={`${isDelayed ? ds.barW : 'w-1'} flex-shrink-0 rounded-l-xl`}
+             style={{ backgroundColor: isDelayed && ds.barColor ? ds.barColor : getPriorityColor(task.priority) }} />
 
         <div className="flex-1 p-4 min-w-0">
           {/* Header */}
@@ -49,9 +51,10 @@ export function TaskCard({ task, onClick, currentUserId }) {
               </span>
             )}
             {delayDays > 0 && (
-              <span className={`badge ${ds.badge} border border-current/20`}>
-                <AlertTriangle size={9} />
-                {delayDays}d atrasada
+              <span className={`badge ${ds.badge} border border-current/30 gap-1
+                                ${delayLevel === 'high' || delayLevel === 'critical' ? 'text-[11px] px-2 py-0.5' : ''}`}>
+                <AlertTriangle size={delayLevel === 'high' || delayLevel === 'critical' ? 11 : 9} />
+                {delayDays}d {ds.label || 'atrasada'}
               </span>
             )}
           </div>
