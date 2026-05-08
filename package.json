@@ -1,0 +1,9 @@
+{
+  "name": "opsagenda",
+  "version": "1.0.0",
+  "scripts": {
+    "backend":  "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "setup":    "cd backend && npm install && npm run db:migrate && npm run db:generate && cd ../frontend && npm install"
+  }
+}

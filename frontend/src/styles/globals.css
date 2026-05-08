@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    @apply bg-base-900 text-base-50 font-sans antialiased;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  ::-webkit-scrollbar       { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track  { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb  { @apply bg-base-400 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-base-300; }
+}
+
+@layer components {
+  .glass {
+    background: rgba(22, 27, 34, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.06);
+  }
+
+  .card {
+    @apply bg-base-700 border border-base-500 rounded-xl;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.04);
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply border-brand-light/30;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5), 0 0 0 1px rgba(56,139,253,.2);
+    transform: translateY(-1px);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg
+           transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2
+           focus:ring-offset-base-900 disabled:opacity-50 disabled:cursor-not-allowed
+           select-none whitespace-nowrap;
+  }
+
+  .btn-sm  { @apply btn text-xs px-3 py-1.5; }
+  .btn-md  { @apply btn text-sm px-4 py-2; }
+  .btn-lg  { @apply btn text-sm px-5 py-2.5; }
+
+  .btn-primary { @apply btn-md bg-brand text-white hover:bg-brand-light focus:ring-brand; }
+  .btn-ghost   { @apply btn-md bg-transparent text-base-100 border border-base-400
+                        hover:bg-base-600 hover:text-base-50 hover:border-base-300
+                        focus:ring-base-400; }
+  .btn-danger  { @apply btn-md bg-danger text-white hover:bg-red-400 focus:ring-danger; }
+
+  .input {
+    @apply w-full bg-base-900 border border-base-400 text-base-50 rounded-lg
+           px-3 py-2 text-sm placeholder:text-base-200
+           focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light/40
+           transition-colors duration-150;
+  }
+
+  .select {
+    @apply input appearance-none cursor-pointer;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .label { @apply text-xs font-medium text-base-100 mb-1 block; }
+}
