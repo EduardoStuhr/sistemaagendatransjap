@@ -10,11 +10,21 @@ import { Avatar } from '../components/ui/Avatar.jsx';
 import { PageLoader } from '../components/ui/Spinner.jsx';
 import { fmtDate } from '../utils/format.js';
 import { getDelayDays, getDelayLevel, DELAY_STYLES } from '../utils/delay.js';
-import { STATUS_LABELS, CATEGORY_LABELS } from '../utils/format.js';
+import { STATUS_LABELS, CATEGORY_LABELS, MAINTENANCE_STATUS_LABELS } from '../utils/format.js';
 
 const STATUS_COLORS = {
   nao_visualizada: '#6e7681', visualizada: '#388bfd', em_andamento: '#d29922',
   aguardando_peca: '#db6d28', pausada: '#8957e5', concluida: '#3fb950', cancelada: '#f85149',
+};
+
+const MAINTENANCE_STATUS_COLORS = {
+  solicitacao_aberta: '#38bdf8',
+  em_orcamento: '#f59e0b',
+  aguardando_aprovacao: '#fb923c',
+  compra_pecas: '#60a5fa',
+  aguardando_entrega_pecas: '#f97316',
+  em_manutencao: '#22c55e',
+  finalizado: '#14b8a6',
 };
 
 const PRIORITY_ORDER = { critica: 0, urgente: 1, alta: 2, media: 3, baixa: 4 };
@@ -46,6 +56,14 @@ export default function Dashboard() {
   const catData = Object.entries(
     tasks.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + 1; return acc; }, {})
   ).map(([k, v]) => ({ name: CATEGORY_LABELS[k] || k, value: v }));
+
+  const maintenanceData = Object.entries(
+    tasks.filter(t => t.requestType === 'Manutenção' || !t.requestType).reduce((acc, t) => {
+      if (!t.maintenanceStatus) return acc;
+      acc[t.maintenanceStatus] = (acc[t.maintenanceStatus] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([k, v]) => ({ name: MAINTENANCE_STATUS_LABELS[k] || k, value: v, color: MAINTENANCE_STATUS_COLORS[k] || '#6e7681' }));
 
   // Top critical/urgent tasks
   const topTasks = [...tasks]
@@ -109,20 +127,21 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Bar chart */}
+        {/* Maintenance flow chart */}
         <div className="card p-5">
-          <p className="text-xs font-semibold text-base-100 uppercase tracking-widest mb-4">Tarefas por Categoria</p>
-          {catData.length === 0 ? (
+          <p className="text-xs font-semibold text-base-100 uppercase tracking-widest mb-4">Fluxo de manutenção</p>
+          {maintenanceData.length === 0 ? (
             <div className="h-40 flex items-center justify-center text-sm text-base-200">Sem dados ainda</div>
           ) : (
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={catData} barSize={20}>
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#6e7681' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#6e7681' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ background: '#1c2333', border: '1px solid #30363d', borderRadius: 8, fontSize: 12, color: '#e6edf3' }} />
-                <Bar dataKey="value" fill="#1f6feb" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-3">
+              {maintenanceData.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                  <div className="flex-1 text-sm text-base-100 truncate">{item.name}</div>
+                  <div className="text-sm font-semibold text-base-50">{item.value}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

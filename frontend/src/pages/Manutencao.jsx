@@ -48,7 +48,7 @@ export default function Manutencao() {
 
   // Maintenance tasks
   const maintTasks = useMemo(() => {
-    let list = tasks.filter(t => ['manutencao', 'pecas'].includes(t.category));
+    let list = tasks.filter(t => t.requestType === 'Manutenção' || t.category === 'pecas');
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(t => t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));

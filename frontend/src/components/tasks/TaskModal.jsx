@@ -6,16 +6,18 @@ import { Modal } from '../ui/Modal.jsx';
 import { StatusBadge, PriorityBadge } from '../ui/StatusBadge.jsx';
 import { Avatar } from '../ui/Avatar.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
-import { fmtDate, fmtDatetime, fmtRelative, STATUS_LABELS, STATUS_STYLES, CATEGORY_LABELS } from '../../utils/format.js';
+import { fmtDate, fmtDatetime, fmtRelative, STATUS_LABELS, STATUS_STYLES, CATEGORY_LABELS, MAINTENANCE_STATUS_LABELS } from '../../utils/format.js';
 import { getDelayDays, getDelayLevel, DELAY_STYLES } from '../../utils/delay.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useToast } from '../../contexts/ToastContext.jsx';
 
 const ALL_STATUSES = Object.keys(STATUS_LABELS);
+const SIMPLE_STATUSES = ['nao_visualizada', 'visualizada', 'em_andamento', 'concluida'];
 
-export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobrar, onDelete }) {
+export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusChange, onAddComment, onCobrar, onDelete }) {
   const { user }  = useAuth();
   const toast     = useToast();
+  const isMaintenanceTask = task.requestType === 'Manutenção' || !task.requestType;
 
   const [comment,  setComment ] = useState('');
   const [sending,  setSending ] = useState(false);
@@ -34,6 +36,16 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
       await onStatusChange(task.id, newStatus);
       toast('Status atualizado', 'success');
     } catch { toast('Erro ao atualizar status', 'error'); }
+    finally { setChanging(false); }
+  }
+
+  async function handleMaintenanceStatus(e) {
+    const newMaintenanceStatus = e.target.value;
+    setChanging(true);
+    try {
+      await onMaintenanceStatusChange(task.id, task.status, newMaintenanceStatus);
+      toast('Etapa de manutenção atualizada', 'success');
+    } catch { toast('Erro ao atualizar etapa de manutenção', 'error'); }
     finally { setChanging(false); }
   }
 
@@ -137,11 +149,37 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
                   onChange={handleStatus}
                   disabled={changing}
                 >
-                  {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+                  {(isMaintenanceTask ? ALL_STATUSES : SIMPLE_STATUSES).map(s => (
+                    <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                  ))}
                 </select>
               </div>
             ) : <StatusBadge status={task.status} />}
           </InfoBox>
+
+          {task.requestType === 'Manutenção' && (
+            <InfoBox label="Etapa de manutenção">
+              {isManager ? (
+                <div className="relative">
+                  {changing && <Spinner size={12} className="absolute right-2 top-1/2 -translate-y-1/2" />}
+                  <select
+                    className="select text-xs py-1"
+                    value={task.maintenanceStatus || ''}
+                    onChange={handleMaintenanceStatus}
+                    disabled={changing}
+                  >
+                    {Object.entries(MAINTENANCE_STATUS_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <span className="badge bg-base-500/50 text-base-100 border border-base-400/50 capitalize">
+                  {task.maintenanceSummary?.maintenanceStatusLabel || '—'}
+                </span>
+              )}
+            </InfoBox>
+          )}
 
           <InfoBox label="Prazo">
             <span className={`text-sm font-semibold ${delayDays > 0 ? ds.text : 'text-base-50'}`}>
@@ -167,6 +205,47 @@ export function TaskModal({ task, onClose, onStatusChange, onAddComment, onCobra
             </div>
           </InfoBox>
         </div>
+
+        {/* Maintenance timeline */}
+        {task.requestType === 'Manutenção' && task.maintenanceSummary && (
+          <div className="rounded-2xl border border-base-500 bg-base-900 p-4">
+            <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-base-200">Fluxo de manutenção</p>
+                <p className="text-sm font-semibold text-base-50">{task.maintenanceSummary.maintenanceStatusLabel}</p>
+              </div>
+              {task.maintenanceSummary.bottleneck && (
+                <div className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-danger">
+                  {task.maintenanceSummary.bottleneck.message}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {task.maintenanceSummary.stageTimings.map(stage => (
+                <div key={stage.key} className={`rounded-2xl border p-3 ${stage.active ? 'border-brand text-brand-light bg-brand/5' : 'border-base-600 bg-base-800'}`}>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${stage.active ? 'bg-brand-light' : stage.days !== null ? 'bg-success' : 'bg-base-500'}`} />
+                      <span className="text-sm font-semibold text-base-100">{stage.label}</span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest text-base-200">{stage.active ? 'Atual' : stage.days !== null ? `${stage.days}d` : '—'}</span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-base-200">
+                    <div>
+                      <p className="font-medium text-base-100">Início</p>
+                      <p>{fmtDatetime(stage.start)}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-base-100">Fim</p>
+                      <p>{fmtDatetime(stage.end)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Read receipts */}
         {task.views?.length > 0 && (

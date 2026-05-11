@@ -66,3 +66,23 @@ export const CATEGORY_LABELS = {
   pecas:      'Peças',
   treinamento:'Treinamento',
 };
+
+export const MAINTENANCE_STATUS_LABELS = {
+  solicitacao_aberta:       'Solicitação Aberta',
+  em_orcamento:             'Em Orçamento',
+  aguardando_aprovacao:     'Aguardando Aprovação',
+  compra_pecas:             'Compra de Peças',
+  aguardando_entrega_pecas: 'Aguardando Entrega de Peças',
+  em_manutencao:            'Em Manutenção',
+  finalizado:               'Finalizado',
+};
+
+export const MAINTENANCE_STATUS_STYLES = {
+  solicitacao_aberta:       { bg: 'bg-base-500/20', text: 'text-base-100' },
+  em_orcamento:             { bg: 'bg-warning/15',   text: 'text-warning' },
+  aguardando_aprovacao:     { bg: 'bg-orange/15',    text: 'text-orange' },
+  compra_pecas:             { bg: 'bg-info/15',      text: 'text-brand-light' },
+  aguardando_entrega_pecas: { bg: 'bg-orange/15',    text: 'text-orange' },
+  em_manutencao:            { bg: 'bg-success/15',   text: 'text-success' },
+  finalizado:               { bg: 'bg-success/15',   text: 'text-success' },
+};

@@ -42,6 +42,7 @@ export function AppLayout() {
           task={selected}
           onClose={() => setSelected(null)}
           onStatusChange={changeStatus}
+          onMaintenanceStatusChange={changeStatus}
           onAddComment={addComment}
           onCobrar={cobrar}
           onDelete={async (id) => { await removeTask(id); setSelected(null); }}

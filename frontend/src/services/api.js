@@ -47,7 +47,7 @@ export const taskService = {
   create:       (data)     => api.post('/tasks', data).then(r => r.data),
   update:       (id, data) => api.put(`/tasks/${id}`, data).then(r => r.data),
   remove:       (id)       => api.delete(`/tasks/${id}`).then(r => r.data),
-  changeStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }).then(r => r.data),
+  changeStatus: (id, status, maintenanceStatus) => api.patch(`/tasks/${id}/status`, { status, maintenanceStatus }).then(r => r.data),
   addComment:   (id, text)   => api.post(`/tasks/${id}/comments`, { text }).then(r => r.data),
   cobrar:       (id)         => api.post(`/tasks/${id}/cobrar`).then(r => r.data),
 };

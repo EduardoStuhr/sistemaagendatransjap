@@ -36,11 +36,25 @@ model Task {
   title       String
   description String?
   priority    String    @default("media")
+  requestType String    @default("Manutenção")
   status      String    @default("nao_visualizada")
+  maintenanceStatus String?
   category    String    @default("manutencao")
-  dueDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  dueDate      DateTime?
+  budgetRequestedAt    DateTime?
+  budgetApprovedAt     DateTime?
+  partsRequestedAt     DateTime?
+  partsPurchasedAt     DateTime?
+  partsDeliveredAt     DateTime?
+  maintenanceStartedAt DateTime?
+  maintenanceFinishedAt DateTime?
+  deliveryForecast     DateTime?
+  deliveryDate         DateTime?
+  delayReason          String?
+  supplierName         String?
+  totalStoppedDays     Int?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   fromId Int
   from   User @relation("TaskFrom", fields: [fromId], references: [id])

@@ -20,13 +20,19 @@ const TARGET_TYPES = [
   { value: 'all',      label: 'Todos os usuários' },
 ];
 
+const REQUEST_TYPES = [
+  { value: 'Agenda', label: 'Agenda' },
+  { value: 'Operacional', label: 'Operacional' },
+  { value: 'Manutenção', label: 'Manutenção' },
+];
+
 export function CreateTaskModal({ onClose, onCreate }) {
   const { user } = useAuth();
   const toast    = useToast();
 
   const [form, setForm] = useState({
     title: '', description: '', priority: 'media',
-    category: 'manutencao', dueDate: '', targetType: 'specific', selectedUsers: [],
+    category: 'manutencao', requestType: 'Manutenção', dueDate: '', targetType: 'specific', selectedUsers: [],
   });
   const [users,    setUsers  ] = useState([]);
   const [loading,  setLoading] = useState(false);
@@ -72,11 +78,12 @@ export function CreateTaskModal({ onClose, onCreate }) {
     setLoading(true);
     try {
       const task = await onCreate({
-        title:       form.title.trim(),
-        description: form.description.trim() || undefined,
-        priority:    form.priority,
-        category:    form.category,
-        dueDate:     form.dueDate || undefined,
+        title:        form.title.trim(),
+        description:  form.description.trim() || undefined,
+        priority:     form.priority,
+        category:     form.category,
+        requestType:  form.requestType,
+        dueDate:      form.dueDate || undefined,
         recipientIds,
       });
       // Faz upload dos arquivos selecionados
@@ -117,8 +124,8 @@ export function CreateTaskModal({ onClose, onCreate }) {
           <textarea className="input resize-none h-16" placeholder="Detalhes, instruções ou contexto..." value={form.description} onChange={set('description')} />
         </div>
 
-        {/* Priority + Category */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Priority + Category + Type */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div>
             <label className="label">Prioridade</label>
             <select className="select" value={form.priority} onChange={set('priority')}>
@@ -129,6 +136,12 @@ export function CreateTaskModal({ onClose, onCreate }) {
             <label className="label">Categoria</label>
             <select className="select" value={form.category} onChange={set('category')}>
               {Object.entries(CATEGORY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Tipo de solicitação</label>
+            <select className="select" value={form.requestType} onChange={set('requestType')}>
+              {REQUEST_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
         </div>

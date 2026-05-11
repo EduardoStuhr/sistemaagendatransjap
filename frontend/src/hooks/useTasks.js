@@ -36,7 +36,7 @@ export function useTasks() {
   }, []);
 
   const createTask    = useCallback(async (data)    => { const t = await taskService.create(data);             setTasks(p => [t, ...p]); return t; }, []);
-  const changeStatus  = useCallback(async (id, st)  => { const t = await taskService.changeStatus(id, st);     setTasks(p => p.map(x => x.id === id ? t : x)); return t; }, []);
+  const changeStatus  = useCallback(async (id, st, maintenanceStatus)  => { const t = await taskService.changeStatus(id, st, maintenanceStatus);     setTasks(p => p.map(x => x.id === id ? t : x)); return t; }, []);
   const addComment    = useCallback(async (id, text) => { const t = await taskService.addComment(id, text);     setTasks(p => p.map(x => x.id === id ? t : x)); return t; }, []);
   const cobrar        = useCallback(async (id)       => { await taskService.cobrar(id); }, []);
   const removeTask    = useCallback(async (id)       => { await taskService.remove(id);                         setTasks(p => p.filter(x => x.id !== id)); }, []);

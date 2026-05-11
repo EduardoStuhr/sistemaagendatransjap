@@ -45,6 +45,16 @@ export function TaskCard({ task, onClick, currentUserId }) {
           {/* Tags */}
           <div className="flex items-center gap-2 flex-wrap mb-3">
             <StatusBadge status={task.status} />
+            {task.requestType && (
+              <span className="badge bg-base-500/60 text-base-100 border border-base-400/50 capitalize">
+                {task.requestType}
+              </span>
+            )}
+            {task.maintenanceSummary?.maintenanceStatusLabel && (
+              <span className="badge bg-base-500/60 text-base-100 border border-base-400/50 capitalize">
+                {task.maintenanceSummary.maintenanceStatusLabel}
+              </span>
+            )}
             {task.category && (
               <span className="badge bg-base-500/60 text-base-100 border border-base-400/50 capitalize">
                 {task.category}
