@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ClipboardList, Calendar, Wrench,
-  ChevronLeft, ChevronRight, Clock, AlertCircle,
+  LayoutDashboard, ClipboardList, Calendar, Wrench, Truck,
+  ChevronLeft, ChevronRight, Clock, AlertCircle, AlertTriangle,
   LogOut, UserCircle, Receipt,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
@@ -10,16 +10,22 @@ import { Avatar } from '../ui/Avatar.jsx';
 import logo from '../../assets/logo.png';
 
 const NAV = [
-  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard'       },
-  { to: '/agenda',     icon: ClipboardList,   label: 'Minha Agenda'    },
-  { to: '/manutencao', icon: Wrench,          label: 'Manutenção & Peças' },
-  { to: '/calendar',   icon: Calendar,        label: 'Calendário'      },
-  { to: '/despesas',   icon: Receipt,         label: 'Despesas'        },
+  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard'          },
+  { to: '/agenda',       icon: ClipboardList,   label: 'Minha Agenda'       },
+  { to: '/manutencao',   icon: Wrench,          label: 'Manutenção & Peças' },
+  { to: '/equipamentos', icon: Truck,           label: 'Equipamentos'       },
+  { to: '/calendar',     icon: Calendar,        label: 'Calendário'         },
+  { to: '/despesas',     icon: Receipt,         label: 'Despesas'           },
 ];
 
-const QUICK = [
+const QUICK_AGENDA = [
   { label: 'Urgentes',  icon: AlertCircle, filter: 'urgentes'  },
   { label: 'Atrasadas', icon: Clock,       filter: 'atrasadas' },
+];
+
+const QUICK_MANUTENCAO = [
+  { label: 'OS Urgentes',   icon: AlertCircle,   filter: 'urgentes'  },
+  { label: 'OS em Gargalo', icon: AlertTriangle, filter: 'gargalos'  },
 ];
 
 export function Sidebar({ taskCounts = {}, onFilter }) {
@@ -34,6 +40,7 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
       {/* Toggle */}
       <button
         onClick={() => setCollapsed(v => !v)}
+        aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
         className="absolute -right-3 top-6 z-10 w-6 h-6 rounded-full bg-base-600 border border-base-400 flex items-center justify-center text-base-100 hover:text-base-50 hover:bg-base-500 transition-all shadow-card"
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -48,11 +55,7 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
           <img
             src={logo}
             alt="Agenda Transjap"
-            style={{
-              height: '38px',
-              width: 'auto',
-              filter: 'drop-shadow(0 0 8px rgba(210,153,34,0.45))',
-            }}
+            style={{ height: '38px', width: 'auto', filter: 'drop-shadow(0 0 8px rgba(210,153,34,0.45))' }}
           />
         )}
       </div>
@@ -66,9 +69,7 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
             key={to} to={to}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group w-full
-               ${isActive
-                 ? 'bg-brand/15 text-brand-light'
-                 : 'text-base-100 hover:bg-base-700 hover:text-base-50'}`
+               ${isActive ? 'bg-brand/15 text-brand-light' : 'text-base-100 hover:bg-base-700 hover:text-base-50'}`
             }
             title={collapsed ? label : undefined}
           >
@@ -86,11 +87,34 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
           </NavLink>
         ))}
 
-        {!collapsed && <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest px-2 py-1.5 mt-3">Filtros rápidos</p>}
-        {QUICK.map(({ label, icon: Icon, filter }) => (
+        {/* Quick filters — Agenda */}
+        {!collapsed && (
+          <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest px-2 py-1.5 mt-3">
+            Filtros — Agenda
+          </p>
+        )}
+        {QUICK_AGENDA.map(({ label, icon: Icon, filter }) => (
           <button
             key={filter}
-            onClick={() => { navigate(`/agenda?filter=${filter}`); }}
+            onClick={() => navigate(`/agenda?filter=${filter}`)}
+            title={collapsed ? label : undefined}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 text-base-100 hover:bg-base-700 hover:text-base-50 group w-full"
+          >
+            <Icon size={16} className="flex-shrink-0 text-base-200 group-hover:text-base-50" />
+            {!collapsed && <span className="text-sm font-medium truncate">{label}</span>}
+          </button>
+        ))}
+
+        {/* Quick filters — Manutenção */}
+        {!collapsed && (
+          <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest px-2 py-1.5 mt-3">
+            Filtros — Manutenção
+          </p>
+        )}
+        {QUICK_MANUTENCAO.map(({ label, icon: Icon, filter }) => (
+          <button
+            key={filter}
+            onClick={() => navigate(`/manutencao?filter=${filter}`)}
             title={collapsed ? label : undefined}
             className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 text-base-100 hover:bg-base-700 hover:text-base-50 group w-full"
           >
@@ -102,7 +126,6 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
 
       {/* User card */}
       <div className="border-t border-base-500 p-2 space-y-1">
-        {/* Profile link */}
         <NavLink to="/profile"
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group w-full
@@ -118,7 +141,6 @@ export function Sidebar({ taskCounts = {}, onFilter }) {
           )}
         </NavLink>
 
-        {/* User info + logout */}
         <div className={`flex items-center gap-3 px-2 py-2 rounded-lg bg-base-700 ${collapsed ? 'justify-center' : ''}`}>
           <Avatar user={user} size="sm" online />
           {!collapsed && (

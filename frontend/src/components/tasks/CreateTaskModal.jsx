@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Paperclip, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Paperclip, X, Wrench, Info } from 'lucide-react';
 import { Modal } from '../ui/Modal.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 import { useToast } from '../../contexts/ToastContext.jsx';
-import { userService, attachmentService } from '../../services/api.js';
+import { userService, attachmentService, equipmentService } from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { CATEGORY_LABELS } from '../../utils/format.js';
 
@@ -17,33 +18,40 @@ const PRIORITIES = [
 
 const TARGET_TYPES = [
   { value: 'specific', label: 'Usuário(s) específico(s)' },
-  { value: 'all',      label: 'Todos os usuários' },
+  { value: 'all',      label: 'Todos os usuários'        },
 ];
 
 const REQUEST_TYPES = [
-  { value: 'Agenda', label: 'Agenda' },
+  { value: 'Agenda',      label: 'Agenda'      },
   { value: 'Operacional', label: 'Operacional' },
-  { value: 'Manutenção', label: 'Manutenção' },
+  { value: 'Manutenção',  label: 'Manutenção'  },
 ];
 
-export function CreateTaskModal({ onClose, onCreate }) {
+export function CreateTaskModal({ onClose, onCreate, defaults = {} }) {
   const { user } = useAuth();
   const toast    = useToast();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     title: '', description: '', priority: 'media',
-    category: 'manutencao', requestType: 'Manutenção', dueDate: '', targetType: 'specific', selectedUsers: [],
+    category: 'manutencao', requestType: 'Manutenção',
+    dueDate: '', targetType: 'specific', selectedUsers: [],
+    equipmentId: '',
+    ...defaults,
   });
-  const [users,    setUsers  ] = useState([]);
-  const [loading,  setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [files,    setFiles  ] = useState([]);
+  const [users,      setUsers     ] = useState([]);
+  const [equipments, setEquipments] = useState([]);
+  const [loading,    setLoading   ] = useState(false);
+  const [fetching,   setFetching  ] = useState(true);
+  const [files,      setFiles     ] = useState([]);
+  const [equipSearch, setEquipSearch] = useState('');
   const fileRef = useRef();
 
   useEffect(() => {
-    userService.list()
-      .then(setUsers)
-      .finally(() => setFetching(false));
+    Promise.all([
+      userService.list(),
+      equipmentService.list(),
+    ]).then(([u, e]) => { setUsers(u); setEquipments(e); }).finally(() => setFetching(false));
   }, []);
 
   function set(k) { return (e) => setForm(p => ({ ...p, [k]: e.target.value })); }
@@ -66,6 +74,14 @@ export function CreateTaskModal({ onClose, onCreate }) {
     e.target.value = '';
   }
 
+  const isMaintenance = form.requestType === 'Manutenção';
+
+  const filteredEquipments = equipSearch.trim()
+    ? equipments.filter(e =>
+        e.name.toLowerCase().includes(equipSearch.toLowerCase()) ||
+        e.code.toLowerCase().includes(equipSearch.toLowerCase()))
+    : equipments;
+
   async function handleCreate() {
     if (!form.title.trim()) { toast('Título obrigatório', 'warning'); return; }
 
@@ -84,13 +100,31 @@ export function CreateTaskModal({ onClose, onCreate }) {
         category:     form.category,
         requestType:  form.requestType,
         dueDate:      form.dueDate || undefined,
+        equipmentId:  isMaintenance && form.equipmentId ? parseInt(form.equipmentId) : undefined,
         recipientIds,
       });
-      // Faz upload dos arquivos selecionados
+
       if (files.length > 0 && task?.id) {
         await attachmentService.upload(task.id, files).catch(() => {});
       }
-      toast('Tarefa criada com sucesso!', 'success');
+
+      if (isMaintenance) {
+        toast(
+          <div className="flex items-center gap-2">
+            <span>OS criada com sucesso!</span>
+            <button
+              onClick={() => { navigate('/manutencao'); }}
+              className="underline font-semibold text-brand-light"
+            >
+              Ver em Manutenção →
+            </button>
+          </div>,
+          'success',
+        );
+      } else {
+        toast('Tarefa criada com sucesso!', 'success');
+      }
+
       onClose();
     } catch { toast('Erro ao criar tarefa', 'error'); }
     finally { setLoading(false); }
@@ -112,19 +146,16 @@ export function CreateTaskModal({ onClose, onCreate }) {
       }
     >
       <div className="space-y-4">
-        {/* Title */}
         <div>
           <label className="label">Título *</label>
           <input className="input" placeholder="Descreva a tarefa ou pendência..." value={form.title} onChange={set('title')} autoFocus />
         </div>
 
-        {/* Description */}
         <div>
           <label className="label">Descrição</label>
           <textarea className="input resize-none h-16" placeholder="Detalhes, instruções ou contexto..." value={form.description} onChange={set('description')} />
         </div>
 
-        {/* Priority + Category + Type */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div>
             <label className="label">Prioridade</label>
@@ -146,13 +177,48 @@ export function CreateTaskModal({ onClose, onCreate }) {
           </div>
         </div>
 
-        {/* Due date */}
+        {/* Info banner when Manutenção is selected */}
+        {isMaintenance && (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg border border-warning/30 bg-warning/5">
+            <Wrench size={13} className="text-warning mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-warning leading-relaxed">
+              Esta tarefa será criada como <strong>Ordem de Serviço</strong> e aparecerá em <strong>Manutenção & Peças</strong>, não na Agenda.
+            </p>
+          </div>
+        )}
+
+        {/* Equipment select — only for Manutenção */}
+        {isMaintenance && (
+          <div>
+            <label className="label">Equipamento (opcional)</label>
+            {fetching ? (
+              <div className="flex justify-center py-3"><Spinner size={18} /></div>
+            ) : equipments.length === 0 ? (
+              <p className="text-xs text-base-200 italic">Nenhum equipamento cadastrado.</p>
+            ) : (
+              <>
+                <input
+                  className="input mb-2 h-8 text-xs"
+                  placeholder="Filtrar equipamentos..."
+                  value={equipSearch}
+                  onChange={e => setEquipSearch(e.target.value)}
+                />
+                <select className="select" value={form.equipmentId} onChange={set('equipmentId')}>
+                  <option value="">— Nenhum equipamento —</option>
+                  {filteredEquipments.map(e => (
+                    <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+        )}
+
         <div>
           <label className="label">Prazo</label>
           <input type="date" className="input" value={form.dueDate} onChange={set('dueDate')} />
         </div>
 
-        {/* Anexos */}
         <div>
           <label className="label">Anexos (opcional)</label>
           <input ref={fileRef} type="file" multiple className="hidden"
@@ -170,14 +236,13 @@ export function CreateTaskModal({ onClose, onCreate }) {
                   <span className="flex-1 truncate text-base-100">{f.name}</span>
                   <span className="text-base-200 flex-shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
                   <button type="button" onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
-                    className="text-base-200 hover:text-danger p-0.5"><X size={11} /></button>
+                    className="text-base-200 hover:text-danger p-0.5" aria-label="Remover arquivo"><X size={11} /></button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Target */}
         <div>
           <label className="label">Destinatários</label>
           <select className="select mb-3" value={form.targetType} onChange={set('targetType')}>

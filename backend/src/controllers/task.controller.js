@@ -20,6 +20,7 @@ const TASK_INCLUDE = {
   comments: { include: { user: { select: { id: true, name: true, initials: true, color: true } } }, orderBy: { createdAt: 'asc' } },
   history: { orderBy: { createdAt: 'desc' } },
   views: { include: { user: { select: { id: true, name: true, initials: true } } } },
+  equipment: { select: { id: true, name: true, code: true, type: true, status: true } },
 };
 
 function canViewTask(task, userId, user) {
@@ -204,13 +205,28 @@ export async function getTask(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function syncEquipmentStatus(equipmentId) {
+  if (!equipmentId) return;
+  const activeCount = await prisma.task.count({
+    where: { equipmentId, status: { notIn: ['concluida', 'cancelada'] } },
+  });
+  const hasActiveMaintenanceOS = await prisma.task.count({
+    where: { equipmentId, maintenanceStatus: 'em_manutencao' },
+  });
+  let newStatus = 'operando';
+  if (hasActiveMaintenanceOS > 0) newStatus = 'em_manutencao';
+  else if (activeCount > 0) newStatus = 'operando';
+  await prisma.equipment.update({ where: { id: equipmentId }, data: { status: newStatus } });
+}
+
 export async function createTask(req, res, next) {
   try {
-    const { title, description, priority, category, dueDate, recipientIds, requestType } = req.body;
+    const { title, description, priority, category, dueDate, recipientIds, requestType, equipmentId } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Título obrigatório' });
 
     const ids = Array.isArray(recipientIds) && recipientIds.length > 0 ? recipientIds : [req.user.id];
     const isMaintenance = requestType === MAINTENANCE_TYPE;
+    const eqId = equipmentId ? parseInt(equipmentId) : null;
 
     const task = await prisma.task.create({
       data: {
@@ -222,14 +238,18 @@ export async function createTask(req, res, next) {
         dueDate: dueDate ? new Date(dueDate) : null,
         totalStoppedDays: 0,
         fromId: req.user.id,
+        equipmentId: eqId,
         recipients: { create: ids.map(uid => ({ userId: uid })) },
         history:    { create: [{ action: `Criada por ${req.user.name}` }] },
       },
       include: TASK_INCLUDE,
     });
 
-    // Notify recipients via socket
-    const notifTitle = `Nova tarefa: ${task.title}`;
+    if (eqId) await syncEquipmentStatus(eqId);
+
+    const notifTitle = isMaintenance
+      ? `[OS] Nova OS de manutenção: ${task.title}`
+      : `Nova tarefa: ${task.title}`;
     for (const uid of ids) {
       if (uid === req.user.id) continue;
       await prisma.notification.create({
@@ -251,10 +271,12 @@ export async function updateTask(req, res, next) {
       requestType, maintenanceStatus, budgetRequestedAt, budgetApprovedAt,
       partsRequestedAt, partsPurchasedAt, partsDeliveredAt,
       maintenanceStartedAt, maintenanceFinishedAt,
-      deliveryForecast, deliveryDate, supplierName, delayReason,
+      deliveryForecast, deliveryDate, supplierName, delayReason, equipmentId,
     } = req.body;
 
     const isMaintenance = requestType === MAINTENANCE_TYPE;
+    const eqId = equipmentId !== undefined ? (equipmentId ? parseInt(equipmentId) : null) : undefined;
+
     const data = {
       title, description, priority, category,
       requestType: requestType || MAINTENANCE_TYPE,
@@ -271,13 +293,12 @@ export async function updateTask(req, res, next) {
       deliveryDate: isMaintenance && deliveryDate ? new Date(deliveryDate) : undefined,
       supplierName: isMaintenance ? supplierName : undefined,
       delayReason: isMaintenance ? delayReason : undefined,
+      ...(eqId !== undefined ? { equipmentId: eqId } : {}),
     };
 
-    const task = await prisma.task.update({
-      where: { id },
-      data,
-      include: TASK_INCLUDE,
-    });
+    const task = await prisma.task.update({ where: { id }, data, include: TASK_INCLUDE });
+
+    if (eqId !== undefined) await syncEquipmentStatus(eqId);
 
     const uids = task.recipients.map(r => r.userId);
     notifyUsers(getIo(), uids, 'task:updated', enrichTask(task));
@@ -334,6 +355,8 @@ export async function changeStatus(req, res, next) {
     const updated = totalStoppedDays !== task.totalStoppedDays
       ? await prisma.task.update({ where: { id }, data: { totalStoppedDays } , include: TASK_INCLUDE })
       : task;
+
+    if (updated.equipmentId) await syncEquipmentStatus(updated.equipmentId);
 
     const uids = updated.recipients.map(r => r.userId);
     notifyUsers(getIo(), [...uids, updated.fromId], 'task:updated', enrichTask(updated));

@@ -76,3 +76,12 @@ export const notifService = {
   markRead:   (id) => api.patch(`/notifications/${id}`).then(r => r.data),
   markAllRead: () => api.patch('/notifications').then(r => r.data),
 };
+
+export const equipmentService = {
+  list:   ()         => api.get('/equipments').then(r => r.data),
+  get:    (id)       => api.get(`/equipments/${id}`).then(r => r.data),
+  stats:  (id)       => api.get(`/equipments/${id}/stats`).then(r => r.data),
+  create: (data)     => api.post('/equipments', data).then(r => r.data),
+  update: (id, data) => api.put(`/equipments/${id}`, data).then(r => r.data),
+  remove: (id)       => api.delete(`/equipments/${id}`).then(r => r.data),
+};

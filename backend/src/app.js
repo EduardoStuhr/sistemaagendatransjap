@@ -12,6 +12,7 @@ import { notificationRoutes } from './routes/notification.routes.js';
 import { partRoutes } from './routes/part.routes.js';
 import { despesaRoutes } from './routes/despesa.routes.js';
 import { attachmentRoutes } from './routes/attachment.routes.js';
+import equipmentRoutes from './routes/equipment.routes.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { initSocket } from './socket/socket.js';
 import { setIo } from './lib/io.js';
@@ -75,6 +76,7 @@ app.use('/api/tasks',         taskRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/parts',         partRoutes);
 app.use('/api/despesas',      despesaRoutes);
+app.use('/api/equipments',    equipmentRoutes);
 app.use('/api',               attachmentRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', env: config.isProd ? 'production' : 'development' }));

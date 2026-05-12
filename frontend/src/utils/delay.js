@@ -67,3 +67,46 @@ export const DELAY_STYLES = {
     animate:     true,
   },
 };
+
+export function getDueProximity(task) {
+  if (!task.dueDate) return 'none';
+  if (['concluida', 'cancelada'].includes(task.status)) return 'none';
+  const due = typeof task.dueDate === 'string' ? parseISO(task.dueDate) : task.dueDate;
+  if (!isValid(due)) return 'none';
+  const diff = differenceInDays(due, new Date());
+  if (diff < 0)   return 'overdue';
+  if (diff === 0) return 'due_today';
+  if (diff <= 2)  return 'due_soon';
+  if (diff <= 5)  return 'upcoming';
+  return 'none';
+}
+
+export const DUE_PROXIMITY_STYLES = {
+  due_today: {
+    border:   'border-orange',
+    text:     'text-orange',
+    badge:    'bg-orange/20 text-orange font-bold animate-pulse',
+    label:    '⏰ Vence hoje',
+    cardBg:   'bg-orange/[.06]',
+    barColor: '#fb923c',
+    barW:     'w-1.5',
+  },
+  due_soon: {
+    border:   'border-warning/60',
+    text:     'text-warning',
+    badge:    'bg-warning/20 text-warning font-semibold',
+    label:    '⚠️ Vence em breve',
+    cardBg:   'bg-warning/[.04]',
+    barColor: '#d29922',
+    barW:     'w-1.5',
+  },
+  upcoming: {
+    border:   'border-brand/40',
+    text:     'text-brand-light',
+    badge:    'bg-brand/15 text-brand-light font-medium',
+    label:    'Vence em alguns dias',
+    cardBg:   '',
+    barColor: '#388bfd',
+    barW:     'w-1',
+  },
+};

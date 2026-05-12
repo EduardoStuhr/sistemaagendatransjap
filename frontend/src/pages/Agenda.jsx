@@ -1,12 +1,12 @@
-import { useState, useMemo } from 'react';
-import { useOutletContext, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, Plus, Inbox } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { useOutletContext, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { Search, Plus, Inbox, Wrench } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard.jsx';
 import { EmptyState } from '../components/ui/EmptyState.jsx';
 import { SkeletonCard } from '../components/ui/Spinner.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getDelayDays, getDelayLevel } from '../utils/delay.js';
-import { PRIORITY_LABELS, STATUS_LABELS, CATEGORY_LABELS } from '../utils/format.js';
+import { isAgendaTask } from '../utils/taskFilters.js';
 
 const PRIORITY_ORDER = { critica: 0, urgente: 1, alta: 2, media: 3, baixa: 4 };
 
@@ -16,31 +16,40 @@ const FILTERS = [
   { id: 'urgentes',   label: 'Urgentes' },
   { id: 'atrasadas',  label: 'Atrasadas' },
   { id: 'concluidas', label: 'Concluídas' },
-  { id: 'manutencao', label: 'Manutenção' },
 ];
 
 export default function Agenda() {
   const { tasks, loading, onSelectTask, onNewTask } = useOutletContext();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Redirect se alguém tentar acessar /agenda?filter=manutencao
+  useEffect(() => {
+    if (searchParams.get('filter') === 'manutencao') {
+      navigate('/manutencao', { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const initialFilter = searchParams.get('filter') || 'todas';
-  const [filter,  setFilter ] = useState(initialFilter);
-  const [search,  setSearch ] = useState('');
+  const [filter, setFilter] = useState(
+    initialFilter === 'manutencao' ? 'todas' : initialFilter,
+  );
+  const [search, setSearch] = useState('');
+
+  // Somente tarefas de agenda (regra crítica)
+  const agendaTasks = useMemo(() => tasks.filter(isAgendaTask), [tasks]);
 
   const filtered = useMemo(() => {
-    let list = [...tasks];
+    let list = [...agendaTasks];
 
-    // Apply quick filter
     switch (filter) {
       case 'pendentes':  list = list.filter(t => !['concluida','cancelada'].includes(t.status)); break;
       case 'urgentes':   list = list.filter(t => ['critica','urgente'].includes(t.priority));    break;
       case 'atrasadas':  list = list.filter(t => getDelayDays(t) > 0);                           break;
       case 'concluidas': list = list.filter(t => t.status === 'concluida');                       break;
-      case 'manutencao': list = list.filter(t => t.category === 'manutencao');                    break;
     }
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(t =>
@@ -50,7 +59,6 @@ export default function Agenda() {
       );
     }
 
-    // Sort: delayed first, then by priority
     list.sort((a, b) => {
       const da = getDelayDays(a), db = getDelayDays(b);
       if (da !== db) return db - da;
@@ -58,9 +66,9 @@ export default function Agenda() {
     });
 
     return list;
-  }, [tasks, filter, search]);
+  }, [agendaTasks, filter, search]);
 
-  const pendingCount = tasks.filter(t => !['concluida','cancelada'].includes(t.status)).length;
+  const pendingCount = agendaTasks.filter(t => !['concluida','cancelada'].includes(t.status)).length;
 
   return (
     <div className="p-6 animate-fade-in">
@@ -76,7 +84,7 @@ export default function Agenda() {
           />
         </div>
         <span className="text-xs text-base-200 whitespace-nowrap">
-          {tasks.length} tarefas · {pendingCount} pendentes
+          {agendaTasks.length} tarefas · {pendingCount} pendentes
         </span>
       </div>
 
@@ -110,11 +118,26 @@ export default function Agenda() {
         <EmptyState
           icon={Inbox}
           title="Nenhuma tarefa encontrada"
-          description={search ? 'Tente outro termo de busca' : 'Crie uma nova tarefa para começar'}
+          description={
+            search
+              ? 'Tente outro termo de busca'
+              : agendaTasks.length === 0
+                ? 'Crie uma nova tarefa para começar'
+                : 'Nenhuma tarefa corresponde ao filtro selecionado'
+          }
           action={
-            <button onClick={onNewTask} className="btn-primary btn-sm">
-              <Plus size={14} /> Nova tarefa
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={onNewTask} className="btn-primary btn-sm">
+                <Plus size={14} /> Nova tarefa
+              </button>
+              <Link
+                to="/manutencao"
+                className="flex items-center gap-1.5 text-xs text-brand-light hover:text-brand transition-colors"
+              >
+                <Wrench size={12} />
+                Procurando OS de manutenção? Veja em <strong>Manutenção & Peças</strong>
+              </Link>
+            </div>
           }
         />
       ) : (

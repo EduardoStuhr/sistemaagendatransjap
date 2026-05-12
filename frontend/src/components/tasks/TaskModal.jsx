@@ -1,51 +1,69 @@
 import { useState } from 'react';
-import { Send, AlertCircle, Clock, Tag, MessageSquare, History, Trash2, FileDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Send, AlertCircle, Clock, Tag, MessageSquare, History, Trash2, FileDown, Truck, Wrench } from 'lucide-react';
 import { exportTaskPDF } from '../../utils/exportTaskPDF.js';
 import { AttachmentPanel } from './AttachmentPanel.jsx';
+import { MaintenanceStepper } from './MaintenanceStepper.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { StatusBadge, PriorityBadge } from '../ui/StatusBadge.jsx';
 import { Avatar } from '../ui/Avatar.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
-import { fmtDate, fmtDatetime, fmtRelative, STATUS_LABELS, STATUS_STYLES, CATEGORY_LABELS, MAINTENANCE_STATUS_LABELS } from '../../utils/format.js';
-import { getDelayDays, getDelayLevel, DELAY_STYLES } from '../../utils/delay.js';
+import {
+  fmtDate, fmtDatetime, fmtRelative,
+  STATUS_LABELS, STATUS_STYLES, CATEGORY_LABELS, MAINTENANCE_STATUS_LABELS,
+} from '../../utils/format.js';
+import { getDelayDays, getDelayLevel, DELAY_STYLES, getDueProximity, DUE_PROXIMITY_STYLES } from '../../utils/delay.js';
+import { isMaintenanceTask } from '../../utils/taskFilters.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useToast } from '../../contexts/ToastContext.jsx';
 
-const ALL_STATUSES = Object.keys(STATUS_LABELS);
+const ALL_STATUSES    = Object.keys(STATUS_LABELS);
 const SIMPLE_STATUSES = ['nao_visualizada', 'visualizada', 'em_andamento', 'concluida'];
 
 export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusChange, onAddComment, onCobrar, onDelete }) {
   const { user }  = useAuth();
   const toast     = useToast();
-  const isMaintenanceTask = task.requestType === 'Manutenção' || !task.requestType;
+  const navigate  = useNavigate();
+  const isMaint   = isMaintenanceTask(task);
 
-  const [comment,  setComment ] = useState('');
-  const [sending,  setSending ] = useState(false);
-  const [changing, setChanging] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [comment,         setComment        ] = useState('');
+  const [sending,         setSending        ] = useState(false);
+  const [changing,        setChanging       ] = useState(false);
+  const [deleting,        setDeleting       ] = useState(false);
+  const [showStageSelect, setShowStageSelect] = useState(false);
 
-  const isManager    = user?.isAdmin || user?.isManager;
-  const delayDays    = getDelayDays(task);
-  const delayLevel   = getDelayLevel(delayDays);
-  const ds           = DELAY_STYLES[delayLevel];
+  const isManager  = user?.isAdmin || user?.isManager;
+  const delayDays  = getDelayDays(task);
+  const delayLevel = getDelayLevel(delayDays);
+  const ds         = DELAY_STYLES[delayLevel];
+  const proximity  = delayDays > 0 ? 'overdue' : getDueProximity(task);
+  const ps         = DUE_PROXIMITY_STYLES[proximity];
 
   async function handleStatus(e) {
-    const newStatus = e.target.value;
     setChanging(true);
     try {
-      await onStatusChange(task.id, newStatus);
+      await onStatusChange(task.id, e.target.value);
       toast('Status atualizado', 'success');
     } catch { toast('Erro ao atualizar status', 'error'); }
     finally { setChanging(false); }
   }
 
   async function handleMaintenanceStatus(e) {
-    const newMaintenanceStatus = e.target.value;
     setChanging(true);
     try {
-      await onMaintenanceStatusChange(task.id, task.status, newMaintenanceStatus);
+      await onMaintenanceStatusChange(task.id, task.status, e.target.value);
       toast('Etapa de manutenção atualizada', 'success');
+      setShowStageSelect(false);
     } catch { toast('Erro ao atualizar etapa de manutenção', 'error'); }
+    finally { setChanging(false); }
+  }
+
+  async function handleStageChange(newStage) {
+    setChanging(true);
+    try {
+      await onMaintenanceStatusChange(task.id, task.status, newStage);
+      toast('Etapa atualizada', 'success');
+    } catch { toast('Erro ao atualizar etapa', 'error'); }
     finally { setChanging(false); }
   }
 
@@ -78,6 +96,11 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
     } catch { toast('Erro ao enviar cobrança', 'error'); }
   }
 
+  function goToManutencao() {
+    onClose();
+    navigate('/manutencao');
+  }
+
   return (
     <Modal
       open
@@ -86,15 +109,17 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
       size="lg"
       footer={
         <>
-          {/* Excluir — admin, manager ou criador da tarefa */}
           {(isManager || task.fromId === user?.id) && onDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="btn btn-sm gap-1.5 mr-auto text-danger border-danger/30 bg-danger/10 hover:bg-danger/20"
-            >
+            <button onClick={handleDelete} disabled={deleting}
+              className="btn btn-sm gap-1.5 mr-auto text-danger border-danger/30 bg-danger/10 hover:bg-danger/20">
               {deleting ? <Spinner size={13} /> : <Trash2 size={13} />}
               Excluir tarefa
+            </button>
+          )}
+
+          {isMaint && (
+            <button onClick={goToManutencao} className="btn btn-ghost btn-sm gap-1.5 text-warning border-warning/30">
+              <Wrench size={13} /> Abrir em Manutenção →
             </button>
           )}
 
@@ -103,11 +128,7 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
               <AlertCircle size={13} /> Cobrar atualização
             </button>
           )}
-          <button
-            onClick={() => exportTaskPDF(task)}
-            className="btn btn-ghost btn-sm gap-1.5"
-            title="Exportar PDF"
-          >
+          <button onClick={() => exportTaskPDF(task)} className="btn btn-ghost btn-sm gap-1.5">
             <FileDown size={13} /> Exportar PDF
           </button>
           <button onClick={onClose} className="btn-ghost btn-sm">Fechar</button>
@@ -115,6 +136,14 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
       }
     >
       <div className="space-y-5">
+        {/* Due proximity banner (only when not overdue) */}
+        {!delayDays && ps && proximity !== 'none' && (
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${ps.border} ${ps.badge}`}>
+            <Clock size={13} />
+            <span className="text-xs font-semibold">{ps.label}</span>
+          </div>
+        )}
+
         {/* Delay banner */}
         {delayDays > 0 && (
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${ds.border} ${ds.badge}`}>
@@ -139,17 +168,12 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
 
         {/* Meta grid */}
         <div className="grid grid-cols-2 gap-3">
-          <InfoBox label="Status" icon={null}>
+          <InfoBox label="Status">
             {isManager ? (
               <div className="relative">
                 {changing && <Spinner size={12} className="absolute right-2 top-1/2 -translate-y-1/2" />}
-                <select
-                  className="select text-xs py-1"
-                  value={task.status}
-                  onChange={handleStatus}
-                  disabled={changing}
-                >
-                  {(isMaintenanceTask ? ALL_STATUSES : SIMPLE_STATUSES).map(s => (
+                <select className="select text-xs py-1" value={task.status} onChange={handleStatus} disabled={changing}>
+                  {(isMaint ? ALL_STATUSES : SIMPLE_STATUSES).map(s => (
                     <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                   ))}
                 </select>
@@ -157,32 +181,36 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
             ) : <StatusBadge status={task.status} />}
           </InfoBox>
 
-          {task.requestType === 'Manutenção' && (
+          {isMaint && (
             <InfoBox label="Etapa de manutenção">
-              {isManager ? (
-                <div className="relative">
-                  {changing && <Spinner size={12} className="absolute right-2 top-1/2 -translate-y-1/2" />}
-                  <select
-                    className="select text-xs py-1"
-                    value={task.maintenanceStatus || ''}
-                    onChange={handleMaintenanceStatus}
-                    disabled={changing}
+              <div className="flex items-center justify-between gap-2">
+                <span className="badge bg-base-500/50 text-base-100 border border-base-400/50 capitalize text-xs">
+                  {task.maintenanceSummary?.maintenanceStatusLabel || '—'}
+                </span>
+                {isManager && (
+                  <button
+                    onClick={() => setShowStageSelect(v => !v)}
+                    className="text-[10px] text-base-200 hover:text-base-50 transition-colors underline underline-offset-2"
                   >
+                    {showStageSelect ? 'fechar' : 'alterar manualmente'}
+                  </button>
+                )}
+              </div>
+              {showStageSelect && isManager && (
+                <div className="relative mt-2">
+                  {changing && <Spinner size={12} className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />}
+                  <select className="select text-xs py-1 w-full" value={task.maintenanceStatus || ''} onChange={handleMaintenanceStatus} disabled={changing}>
                     {Object.entries(MAINTENANCE_STATUS_LABELS).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
                     ))}
                   </select>
                 </div>
-              ) : (
-                <span className="badge bg-base-500/50 text-base-100 border border-base-400/50 capitalize">
-                  {task.maintenanceSummary?.maintenanceStatusLabel || '—'}
-                </span>
               )}
             </InfoBox>
           )}
 
           <InfoBox label="Prazo">
-            <span className={`text-sm font-semibold ${delayDays > 0 ? ds.text : 'text-base-50'}`}>
+            <span className={`text-sm font-semibold ${delayDays > 0 ? ds.text : ps ? ps.text : 'text-base-50'}`}>
               {fmtDate(task.dueDate)} {delayDays > 0 && '⚠️'}
             </span>
           </InfoBox>
@@ -204,47 +232,29 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
               ))}
             </div>
           </InfoBox>
+
+          {/* Equipment box */}
+          {task.equipment && (
+            <InfoBox label="Equipamento">
+              <div className="flex items-center gap-2">
+                <Truck size={14} className="text-brand-light flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-base-50">{task.equipment.name}</p>
+                  <p className="text-[10px] font-mono text-base-200">{task.equipment.code}</p>
+                </div>
+              </div>
+            </InfoBox>
+          )}
         </div>
 
-        {/* Maintenance timeline */}
-        {task.requestType === 'Manutenção' && task.maintenanceSummary && (
-          <div className="rounded-2xl border border-base-500 bg-base-900 p-4">
-            <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-base-200">Fluxo de manutenção</p>
-                <p className="text-sm font-semibold text-base-50">{task.maintenanceSummary.maintenanceStatusLabel}</p>
-              </div>
-              {task.maintenanceSummary.bottleneck && (
-                <div className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-danger">
-                  {task.maintenanceSummary.bottleneck.message}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              {task.maintenanceSummary.stageTimings.map(stage => (
-                <div key={stage.key} className={`rounded-2xl border p-3 ${stage.active ? 'border-brand text-brand-light bg-brand/5' : 'border-base-600 bg-base-800'}`}>
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${stage.active ? 'bg-brand-light' : stage.days !== null ? 'bg-success' : 'bg-base-500'}`} />
-                      <span className="text-sm font-semibold text-base-100">{stage.label}</span>
-                    </div>
-                    <span className="text-[10px] uppercase tracking-widest text-base-200">{stage.active ? 'Atual' : stage.days !== null ? `${stage.days}d` : '—'}</span>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-base-200">
-                    <div>
-                      <p className="font-medium text-base-100">Início</p>
-                      <p>{fmtDatetime(stage.start)}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-base-100">Fim</p>
-                      <p>{fmtDatetime(stage.end)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Maintenance Stepper interativo */}
+        {isMaint && (
+          <MaintenanceStepper
+            task={task}
+            isManager={isManager}
+            onChangeStage={isManager ? handleStageChange : undefined}
+            changing={changing}
+          />
         )}
 
         {/* Read receipts */}
@@ -265,9 +275,7 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
 
         {/* Attachments */}
         <div className="border-t border-base-500 pt-4">
-          <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest mb-3 flex items-center gap-1">
-            <span>Anexos</span>
-          </p>
+          <p className="text-[10px] font-semibold text-base-200 uppercase tracking-widest mb-3">Anexos</p>
           <AttachmentPanel task={task} />
         </div>
 
@@ -296,7 +304,6 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
             ))}
           </div>
 
-          {/* Comment input */}
           <div className="flex gap-2">
             <textarea
               className="input text-xs resize-none flex-1 h-16"
@@ -305,11 +312,7 @@ export function TaskModal({ task, onClose, onStatusChange, onMaintenanceStatusCh
               onChange={e => setComment(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleComment(); }}
             />
-            <button
-              onClick={handleComment}
-              disabled={!comment.trim() || sending}
-              className="btn-primary btn-sm self-stretch px-3"
-            >
+            <button onClick={handleComment} disabled={!comment.trim() || sending} className="btn-primary btn-sm self-stretch px-3">
               {sending ? <Spinner size={14} /> : <Send size={14} />}
             </button>
           </div>
