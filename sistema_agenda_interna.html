@@ -1,0 +1,645 @@
+
+<div id="app-root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#app-root{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#e6edf3;height:640px;display:flex;overflow:hidden;border-radius:12px;font-size:13px}
+.sidebar{width:220px;min-width:220px;background:#0d1117;border-right:1px solid #21262d;display:flex;flex-direction:column;padding:0}
+.sidebar-header{padding:16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#1f6feb,#0d419d);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.sidebar-title{font-size:13px;font-weight:600;color:#e6edf3;line-height:1.2}
+.sidebar-sub{font-size:11px;color:#8b949e}
+.sidebar-user{padding:12px;border-bottom:1px solid #21262d}
+.user-select{width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:6px 8px;font-size:12px;cursor:pointer}
+.sidebar-nav{padding:8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.6px;padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;color:#8b949e;font-size:13px;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:#161b22;color:#e6edf3}
+.nav-item.active{background:#1f6feb22;color:#388bfd}
+.nav-icon{font-size:15px;width:16px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:#f85149;color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:#0d1117;border-bottom:1px solid #21262d;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:#e6edf3;flex:1}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.btn-primary{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#388bfd}
+.btn-ghost{background:transparent;color:#8b949e;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-ghost:hover{background:#161b22;color:#e6edf3;border-color:#8b949e}
+.notif-btn{position:relative;background:transparent;border:none;color:#8b949e;cursor:pointer;padding:4px;border-radius:6px;font-size:18px;transition:color .15s}
+.notif-btn:hover{color:#e6edf3}
+.notif-dot{position:absolute;top:2px;right:2px;width:8px;height:8px;background:#f85149;border-radius:50%;border:2px solid #0d1117}
+.content{flex:1;overflow-y:auto;padding:16px}
+/* Dashboard */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric-card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:12px}
+.metric-label{font-size:11px;color:#8b949e;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:700;color:#e6edf3}
+.metric-sub{font-size:11px;color:#8b949e;margin-top:2px}
+.metric-bar{height:3px;background:#21262d;border-radius:2px;margin-top:8px;overflow:hidden}
+.metric-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.section-title{font-size:13px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.dash-card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px}
+.dash-card-title{font-size:12px;font-weight:600;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px}
+/* Status pills */
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.priority-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+/* Task list */
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{background:#161b22;border:1px solid #30363d;color:#8b949e;border-radius:16px;padding:4px 12px;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-btn:hover{border-color:#8b949e;color:#e6edf3}
+.filter-btn.active{background:#1f6feb;border-color:#1f6feb;color:#fff}
+.task-card{background:#161b22;border:1px solid #21262d;border-radius:8px;margin-bottom:8px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}
+.task-card:hover{border-color:#388bfd44;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.task-card.critical-blink{animation:critBlink 1.2s ease-in-out infinite}
+@keyframes critBlink{0%,100%{box-shadow:0 0 0 1px #f85149}50%{box-shadow:0 0 12px 2px #f85149}}
+.task-accent{position:absolute;left:0;top:0;bottom:0;width:3px}
+.task-inner{padding:12px 12px 10px 16px}
+.task-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.task-title{font-size:13px;font-weight:600;color:#e6edf3;flex:1;line-height:1.4}
+.task-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.task-footer{display:flex;align-items:center;gap:8px;margin-top:8px;border-top:1px solid #21262d;padding-top:8px}
+.avatar-sm{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
+.task-desc{font-size:12px;color:#8b949e;line-height:1.5;margin-bottom:4px}
+/* Modal */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100;border-radius:12px}
+.modal{background:#161b22;border:1px solid #30363d;border-radius:10px;width:580px;max-height:560px;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.6)}
+.modal-header{padding:16px 20px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;gap:12px}
+.modal-title{font-size:15px;font-weight:600;color:#e6edf3;flex:1}
+.modal-close{background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:0}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.modal-footer{padding:12px 20px;border-top:1px solid #21262d;display:flex;justify-content:flex-end;gap:8px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:12px;font-weight:500;color:#8b949e;margin-bottom:4px;display:block}
+.form-input,.form-select,.form-textarea{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:#388bfd}
+.form-textarea{height:70px;resize:none}
+.form-select option{background:#161b22}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Detail modal */
+.detail-section{margin-bottom:14px}
+.detail-label{font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-item{background:#0d1117;border-radius:6px;padding:10px}
+.detail-item-label{font-size:11px;color:#8b949e;margin-bottom:3px}
+.detail-item-value{font-size:13px;color:#e6edf3;font-weight:500}
+.comment-box{background:#0d1117;border-radius:6px;padding:10px;margin-bottom:8px;border:1px solid #21262d}
+.comment-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.comment-text{font-size:12px;color:#c9d1d9;line-height:1.5}
+.comment-time{font-size:11px;color:#8b949e;margin-left:auto}
+.history-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #21262d}
+.history-dot{width:6px;height:6px;border-radius:50%;background:#388bfd;margin-top:5px;flex-shrink:0}
+.history-text{font-size:12px;color:#8b949e}
+.cobrar-btn{background:#f85149;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.cobrar-btn:hover{background:#da3633}
+.status-select{background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;cursor:pointer}
+.badge-unread{display:inline-block;background:#1f6feb;width:7px;height:7px;border-radius:50%;margin-right:2px;vertical-align:middle}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#8b949e;gap:8px}
+.empty-icon{font-size:36px;opacity:.4}
+.progress-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.progress-label{font-size:12px;color:#8b949e;width:80px}
+.progress-bar{flex:1;height:6px;background:#21262d;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s}
+.progress-pct{font-size:11px;color:#8b949e;width:30px;text-align:right}
+.comment-input-row{display:flex;gap:8px;align-items:flex-end}
+.comment-input{flex:1;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;resize:none;height:50px}
+.comment-input:focus{outline:none;border-color:#388bfd}
+.notif-panel{position:absolute;top:52px;right:16px;width:300px;background:#161b22;border:1px solid #30363d;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:50;max-height:320px;overflow-y:auto}
+.notif-item{padding:10px 14px;border-bottom:1px solid #21262d;cursor:pointer;transition:background .15s}
+.notif-item:hover{background:#21262d}
+.notif-item-title{font-size:12px;color:#e6edf3;margin-bottom:2px}
+.notif-item-sub{font-size:11px;color:#8b949e}
+.notif-dot-item{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;flex-shrink:0}
+</style>
+<script>
+const {useState,useMemo,useRef,useEffect}=React;
+
+const USERS=[
+  {id:1,name:"Maria Souza",role:"Gestora",initials:"MS",color:"#1f6feb",isAdmin:true,isManager:true},
+  {id:2,name:"João Lima",role:"Engenheiro",initials:"JL",color:"#3fb950",isEngineer:true},
+  {id:3,name:"Pedro Rocha",role:"Manutenção",initials:"PR",color:"#db6d28"},
+  {id:4,name:"Ana Costa",role:"Administradora",initials:"AC",color:"#8957e5",isAdmin:true},
+  {id:5,name:"Carlos Mendes",role:"Técnico",initials:"CM",color:"#d29922"},
+];
+
+const STATUS_CONFIG={
+  "Não visualizada":{color:"#6e7681",bg:"#6e768122"},
+  "Visualizada":{color:"#388bfd",bg:"#388bfd22"},
+  "Em andamento":{color:"#d29922",bg:"#d2992222"},
+  "Aguardando peça":{color:"#db6d28",bg:"#db6d2822"},
+  "Pausada":{color:"#8957e5",bg:"#8957e522"},
+  "Concluída":{color:"#3fb950",bg:"#3fb95022"},
+  "Cancelada":{color:"#f85149",bg:"#f8514922"},
+};
+
+const PRIORITY_CONFIG={
+  "Baixa":{color:"#6e7681",bg:"#6e768122"},
+  "Média":{color:"#388bfd",bg:"#388bfd22"},
+  "Alta":{color:"#d29922",bg:"#d2992222"},
+  "Urgente":{color:"#db6d28",bg:"#db6d2822"},
+  "Crítica":{color:"#f85149",bg:"#f8514922"},
+};
+
+const now=new Date();
+const d=(offset)=>{const dt=new Date(now);dt.setDate(dt.getDate()+offset);return dt.toLocaleDateString("pt-BR");};
+
+const INITIAL_TASKS=[
+  {id:1,title:"Verificar vazamento da máquina X — Setor 2",desc:"Identificado vazamento de óleo hidráulico na lateral da máquina. Necessário inspeção urgente.",priority:"Urgente",status:"Em andamento",category:"Manutenção",from:1,to:[3],toType:"user",created:d(-3),due:d(0),viewed:[{userId:3,at:"Hoje 08:12"}],comments:[{userId:3,text:"Máquina inspecionada. Vedação com desgaste avançado.",time:"Hoje 08:30"},{userId:3,text:"Peça solicitada ao almoxarifado. Aguardando confirmação.",time:"Hoje 10:15"}],history:[{action:"Criada por Maria Souza",at:d(-3)},{action:"Visualizada por Pedro Rocha",at:d(-2)},{action:"Status alterado: Em andamento",at:d(-2)},{action:"Comentário adicionado",at:"Hoje 08:30"}]},
+  {id:2,title:"Reunião de equipe — sexta às 14h",desc:"Pauta: indicadores de manutenção do Q2, distribuição de escalas e novos protocolos.",priority:"Média",status:"Não visualizada",category:"Aviso",from:1,to:[1,2,3,4,5],toType:"all",created:d(-1),due:d(2),viewed:[{userId:1,at:"Hoje 07:00"}],comments:[],history:[{action:"Criada por Maria Souza",at:d(-1)}]},
+  {id:3,title:"Trocar rolamento do motor B7",desc:"Rolamento com ruído excessivo. Técnico solicitou parada programada para substituição.",priority:"Alta",status:"Aguardando peça",category:"Manutenção",from:2,to:[5],toType:"user",created:d(-5),due:d(1),viewed:[{userId:5,at:d(-4)+" 09:40"}],comments:[{userId:5,text:"Rolamento identificado: SKF 6205. Pedido já feito.",time:d(-4)+" 14:00"}],history:[{action:"Criada por João Lima",at:d(-5)},{action:"Visualizada por Carlos Mendes",at:d(-4)},{action:"Status alterado: Aguardando peça",at:d(-4)},{action:"Comentário adicionado",at:d(-4)}]},
+  {id:4,title:"Atualizar plano de manutenção preventiva — 2º semestre",desc:"Revisar cronograma e atualizar as fichas de cada equipamento conforme inspeções recentes.",priority:"Média",status:"Visualizada",category:"Solicitação",from:1,to:[2],toType:"user",created:d(-2),due:d(5),viewed:[{userId:2,at:"Ontem 16:20"}],comments:[],history:[{action:"Criada por Maria Souza",at:d(-2)},{action:"Visualizada por João Lima",at:d(-1)}]},
+  {id:5,title:"CRÍTICO: Falha no sistema elétrico — Painel 3",desc:"Disjuntor disparando repetidamente. Risco de parada total da linha de produção.",priority:"Crítica",status:"Em andamento",category:"Manutenção",from:4,to:[2,5],toType:"user",created:"Hoje",due:"Hoje",viewed:[{userId:2,at:"Hoje 06:15"},{userId:5,at:"Hoje 06:20"}],comments:[{userId:2,text:"Em análise. Possível sobrecarga no circuito 3B.",time:"Hoje 07:00"},{userId:5,text:"Medições feitas: tensão irregular. Aguardando técnico especializado.",time:"Hoje 08:45"}],history:[{action:"Criada por Ana Costa",at:"Hoje"},{action:"Visualizada por João Lima",at:"Hoje 06:15"},{action:"Visualizada por Carlos Mendes",at:"Hoje 06:20"},{action:"Status alterado: Em andamento",at:"Hoje 07:00"}]},
+  {id:6,title:"Limpeza e lubrificação — compressores do setor A",desc:"Manutenção preventiva mensal dos compressores CP-01 a CP-04.",priority:"Baixa",status:"Concluída",category:"Manutenção",from:1,to:[3],toType:"user",created:d(-8),due:d(-2),viewed:[{userId:3,at:d(-7)+" 07:30"}],comments:[{userId:3,text:"Concluído. Todos os compressores lubrificados e testados.",time:d(-2)+" 17:00"}],history:[{action:"Criada por Maria Souza",at:d(-8)},{action:"Concluída por Pedro Rocha",at:d(-2)}]},
+  {id:7,title:"Treinamento: NR-12 — operadores novos",desc:"Agendar e realizar treinamento de segurança para os 4 novos operadores do turno da tarde.",priority:"Alta",status:"Pausada",category:"Solicitação",from:1,to:[1,2,4,5],toType:"sector",created:d(-4),due:d(3),viewed:[{userId:2,at:d(-3)},{userId:4,at:d(-3)},{userId:5,at:d(-2)}],comments:[{userId:4,text:"Instrutor confirmado para a semana que vem.",time:d(-1)}],history:[{action:"Criada por Maria Souza",at:d(-4)},{action:"Status alterado: Pausada",at:d(-2)}]},
+];
+
+const INITIAL_NOTIFS=[
+  {id:1,title:"⚡ Tarefa crítica atribuída a você",sub:"CRÍTICO: Falha no sistema elétrico — Painel 3",read:false},
+  {id:2,title:"🔔 Cobrança de atualização",sub:"Pedro Rocha: Verificar vazamento da máquina X",read:false},
+  {id:3,title:"Nova tarefa recebida",sub:"Treinamento NR-12 — operadores novos",read:true},
+];
+
+const Avatar=({user,size=24})=>{
+  const style={width:size,height:size,minWidth:size,borderRadius:"50%",background:user.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.35,fontWeight:700,color:"#fff"};
+  return React.createElement("div",{style},user.initials);
+};
+
+const StatusPill=({status})=>{
+  const cfg=STATUS_CONFIG[status]||{color:"#8b949e",bg:"#8b949e22"};
+  return React.createElement("span",{className:"status-pill",style:{background:cfg.bg,color:cfg.color}},
+    React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:cfg.color,display:"inline-block"}}),
+    status
+  );
+};
+
+const PriorityPill=({priority})=>{
+  const cfg=PRIORITY_CONFIG[priority]||{color:"#8b949e",bg:"#8b949e22"};
+  return React.createElement("span",{className:"priority-pill",style:{background:cfg.bg,color:cfg.color}},priority);
+};
+
+function App(){
+  const [currentUserId,setCurrentUserId]=useState(1);
+  const [view,setView]=useState("dashboard");
+  const [tasks,setTasks]=useState(INITIAL_TASKS);
+  const [filter,setFilter]=useState("Todas");
+  const [showCreate,setShowCreate]=useState(false);
+  const [selectedTask,setSelectedTask]=useState(null);
+  const [notifs,setNotifs]=useState(INITIAL_NOTIFS);
+  const [showNotifs,setShowNotifs]=useState(false);
+  const [newComment,setNewComment]=useState("");
+
+  const currentUser=USERS.find(u=>u.id===currentUserId);
+  const unreadNotifs=notifs.filter(n=>!n.read).length;
+
+  const myTasks=useMemo(()=>{
+    if(currentUser.isAdmin)return tasks;
+    return tasks.filter(t=>t.to.includes(currentUserId)||t.from===currentUserId);
+  },[tasks,currentUserId,currentUser]);
+
+  const filteredTasks=useMemo(()=>{
+    if(filter==="Todas")return myTasks;
+    if(filter==="Pendentes")return myTasks.filter(t=>!["Concluída","Cancelada"].includes(t.status));
+    if(filter==="Urgentes")return myTasks.filter(t=>["Urgente","Crítica"].includes(t.priority));
+    if(filter==="Concluídas")return myTasks.filter(t=>t.status==="Concluída");
+    if(filter==="Atrasadas")return myTasks.filter(t=>t.due===d(0)&&!["Concluída","Cancelada"].includes(t.status));
+    if(filter==="Manutenção")return myTasks.filter(t=>t.category==="Manutenção");
+    return myTasks.filter(t=>t.status===filter||t.category===filter||t.priority===filter);
+  },[myTasks,filter]);
+
+  const sortedTasks=useMemo(()=>{
+    return [...filteredTasks].sort((a,b)=>{
+      const pOrder={"Crítica":0,"Urgente":1,"Alta":2,"Média":3,"Baixa":4};
+      if(pOrder[a.priority]!==pOrder[b.priority])return pOrder[a.priority]-pOrder[b.priority];
+      return 0;
+    });
+  },[filteredTasks]);
+
+  const stats={
+    total:myTasks.length,
+    pending:myTasks.filter(t=>!["Concluída","Cancelada"].includes(t.status)).length,
+    done:myTasks.filter(t=>t.status==="Concluída").length,
+    critical:myTasks.filter(t=>t.priority==="Crítica").length,
+    urgent:myTasks.filter(t=>t.priority==="Urgente").length,
+    overdue:myTasks.filter(t=>t.due===d(0)&&!["Concluída","Cancelada"].includes(t.status)).length,
+  };
+
+  const handleTaskClick=(task)=>{
+    const wasUnread=!task.viewed.some(v=>v.userId===currentUserId);
+    if(wasUnread){
+      setTasks(prev=>prev.map(t=>{
+        if(t.id!==task.id)return t;
+        const newStatus=t.status==="Não visualizada"?"Visualizada":t.status;
+        return{...t,status:newStatus,viewed:[...t.viewed,{userId:currentUserId,at:"Agora"}],history:[...t.history,{action:`Visualizada por ${currentUser.name}`,at:"Agora"}]};
+      }));
+    }
+    setSelectedTask(tasks.find(t=>t.id===task.id)||task);
+  };
+
+  const handleStatusChange=(taskId,newStatus)=>{
+    setTasks(prev=>prev.map(t=>{
+      if(t.id!==taskId)return t;
+      return{...t,status:newStatus,history:[...t.history,{action:`Status alterado para: ${newStatus} por ${currentUser.name}`,at:"Agora"}]};
+    }));
+    setSelectedTask(prev=>prev?{...prev,status:newStatus,history:[...prev.history,{action:`Status alterado para: ${newStatus}`,at:"Agora"}]}:null);
+  };
+
+  const handleAddComment=(taskId)=>{
+    if(!newComment.trim())return;
+    const comment={userId:currentUserId,text:newComment.trim(),time:"Agora"};
+    setTasks(prev=>prev.map(t=>{
+      if(t.id!==taskId)return t;
+      return{...t,comments:[...t.comments,comment],history:[...t.history,{action:`Comentário adicionado por ${currentUser.name}`,at:"Agora"}]};
+    }));
+    setSelectedTask(prev=>prev?{...prev,comments:[...prev.comments,comment]}:null);
+    setNewComment("");
+  };
+
+  const handleCobrar=(taskId)=>{
+    setTasks(prev=>prev.map(t=>{
+      if(t.id!==taskId)return t;
+      return{...t,history:[...t.history,{action:`⚠️ Cobrança de atualização enviada por ${currentUser.name}`,at:"Agora"}]};
+    }));
+    setNotifs(prev=>[{id:Date.now(),title:"⚠️ Cobrança de atualização recebida",sub:`${currentUser.name} solicita atualização urgente`,read:false},...prev]);
+    alert("Notificação de cobrança enviada ao responsável!");
+  };
+
+  const [createForm,setCreateForm]=useState({title:"",desc:"",priority:"Média",toType:"user",toUser:"2",due:"",category:"Manutenção"});
+
+  const handleCreate=()=>{
+    if(!createForm.title.trim())return;
+    const toIds=createForm.toType==="all"?[1,2,3,4,5]:createForm.toType==="managers"?[1]:createForm.toType==="engineers"?[2]:[parseInt(createForm.toUser)];
+    const newTask={
+      id:Date.now(),title:createForm.title,desc:createForm.desc,priority:createForm.priority,
+      status:"Não visualizada",category:createForm.category,from:currentUserId,
+      to:toIds,toType:createForm.toType,created:"Hoje",due:createForm.due||d(7),
+      viewed:[],comments:[],history:[{action:`Criada por ${currentUser.name}`,at:"Agora"}]
+    };
+    setTasks(prev=>[newTask,...prev]);
+    setNotifs(prev=>[{id:Date.now(),title:"Nova tarefa criada",sub:createForm.title,read:false},...prev]);
+    setShowCreate(false);
+    setCreateForm({title:"",desc:"",priority:"Média",toType:"user",toUser:"2",due:"",category:"Manutenção"});
+  };
+
+  const navItems=[
+    {id:"dashboard",icon:"📊",label:"Dashboard"},
+    {id:"agenda",icon:"📋",label:"Minha Agenda",badge:stats.pending},
+    {id:"calendar",icon:"📅",label:"Calendário"},
+  ];
+
+  const sidebarEl=React.createElement("aside",{className:"sidebar"},
+    React.createElement("div",{className:"sidebar-header"},
+      React.createElement("div",{className:"logo-mark"},"OP"),
+      React.createElement("div",null,
+        React.createElement("div",{className:"sidebar-title"},"OpsAgenda"),
+        React.createElement("div",{className:"sidebar-sub"},"Sistema Interno")
+      )
+    ),
+    React.createElement("div",{className:"sidebar-user"},
+      React.createElement("select",{className:"user-select",value:currentUserId,onChange:e=>{setCurrentUserId(parseInt(e.target.value));setView("dashboard");setFilter("Todas");}},
+        USERS.map(u=>React.createElement("option",{key:u.id,value:u.id},`${u.name} (${u.role})`))
+      )
+    ),
+    React.createElement("nav",{className:"sidebar-nav"},
+      React.createElement("div",{className:"nav-section"},"Principal"),
+      navItems.map(item=>
+        React.createElement("button",{key:item.id,className:`nav-item${view===item.id?" active":""}`,onClick:()=>setView(item.id)},
+          React.createElement("span",{className:"nav-icon"},item.icon),
+          item.label,
+          item.badge&&item.badge>0?React.createElement("span",{className:"nav-badge"},item.badge>9?"9+":item.badge):null
+        )
+      ),
+      React.createElement("div",{className:"nav-section",style:{marginTop:8}},"Filtros rápidos"),
+      ["Manutenção","Urgentes","Atrasadas"].map(f=>
+        React.createElement("button",{key:f,className:"nav-item",onClick:()=>{setView("agenda");setFilter(f);}},
+          React.createElement("span",{className:"nav-icon"},f==="Manutenção"?"🔧":f==="Urgentes"?"🔴":"⏰"),f
+        )
+      ),
+      React.createElement("div",{style:{padding:"12px 8px 0",borderTop:"1px solid #21262d",marginTop:8}}),
+      React.createElement("div",{style:{padding:"8px",background:"#161b22",borderRadius:8,margin:"0 0 8px 0"}},
+        React.createElement("div",{style:{fontSize:11,color:"#8b949e",marginBottom:4}},"Sessão atual"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement(Avatar,{user:currentUser,size:28}),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"#e6edf3"}},currentUser.name),
+            React.createElement("div",{style:{fontSize:11,color:"#8b949e"}},currentUser.role)
+          )
+        )
+      )
+    )
+  );
+
+  const DashboardView=()=>{
+    const statusDist=Object.keys(STATUS_CONFIG).map(s=>({label:s,count:myTasks.filter(t=>t.status===s).length,color:STATUS_CONFIG[s].color})).filter(s=>s.count>0);
+    return React.createElement("div",null,
+      React.createElement("div",{className:"metrics-grid"},
+        [
+          {label:"Total de tarefas",value:stats.total,sub:"na sua agenda",color:"#388bfd",pct:100},
+          {label:"Pendentes",value:stats.pending,sub:"aguardando ação",color:"#d29922",pct:Math.round(stats.pending/Math.max(stats.total,1)*100)},
+          {label:"Concluídas",value:stats.done,sub:"finalizadas",color:"#3fb950",pct:Math.round(stats.done/Math.max(stats.total,1)*100)},
+          {label:"Críticas/Urgentes",value:stats.critical+stats.urgent,sub:"prioridade máxima",color:"#f85149",pct:Math.round((stats.critical+stats.urgent)/Math.max(stats.total,1)*100)},
+        ].map((m,i)=>React.createElement("div",{key:i,className:"metric-card"},
+          React.createElement("div",{className:"metric-label"},m.label),
+          React.createElement("div",{className:"metric-value",style:{color:m.color}},m.value),
+          React.createElement("div",{className:"metric-sub"},m.sub),
+          React.createElement("div",{className:"metric-bar"},React.createElement("div",{className:"metric-bar-fill",style:{width:`${m.pct}%`,background:m.color}}))
+        ))
+      ),
+      React.createElement("div",{className:"dash-row"},
+        React.createElement("div",{className:"dash-card"},
+          React.createElement("div",{className:"dash-card-title"},"Distribuição por status"),
+          statusDist.length===0?React.createElement("div",{style:{color:"#8b949e",fontSize:12}},"Sem tarefas"):
+          statusDist.map(s=>React.createElement("div",{key:s.label,className:"progress-row"},
+            React.createElement("div",{className:"progress-label",style:{color:s.color,fontSize:11,fontWeight:600}},s.label.split(" ")[0]),
+            React.createElement("div",{className:"progress-bar"},React.createElement("div",{className:"progress-fill",style:{width:`${Math.round(s.count/stats.total*100)}%`,background:s.color}})),
+            React.createElement("div",{className:"progress-pct"},s.count)
+          ))
+        ),
+        React.createElement("div",{className:"dash-card"},
+          React.createElement("div",{className:"dash-card-title"},"Tarefas críticas"),
+          myTasks.filter(t=>["Crítica","Urgente"].includes(t.priority)&&t.status!=="Concluída").length===0?
+          React.createElement("div",{style:{color:"#3fb950",fontSize:12,padding:8}},"✓ Nenhuma tarefa crítica pendente"):
+          myTasks.filter(t=>["Crítica","Urgente"].includes(t.priority)&&t.status!=="Concluída").map(task=>
+            React.createElement("div",{key:task.id,onClick:()=>{handleTaskClick(task);},style:{padding:"8px 10px",background:"#0d1117",borderRadius:6,marginBottom:6,cursor:"pointer",borderLeft:`3px solid ${PRIORITY_CONFIG[task.priority].color}`}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"#e6edf3",marginBottom:2}},task.title.substring(0,40)+(task.title.length>40?"...":"")),
+              React.createElement("div",{style:{display:"flex",gap:6}},React.createElement(PriorityPill,{priority:task.priority}),React.createElement(StatusPill,{status:task.status}))
+            )
+          )
+        )
+      ),
+      React.createElement("div",{className:"dash-card",style:{marginBottom:12}},
+        React.createElement("div",{className:"dash-card-title"},"Tarefas recentes"),
+        myTasks.slice(0,4).map(task=>
+          React.createElement("div",{key:task.id,onClick:()=>handleTaskClick(task),style:{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #21262d",cursor:"pointer"}},
+            React.createElement("div",{style:{width:3,height:32,borderRadius:2,background:STATUS_CONFIG[task.status]?.color||"#6e7681",flexShrink:0}}),
+            React.createElement("div",{style:{flex:1,minWidth:0}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"#e6edf3",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},task.title),
+              React.createElement("div",{style:{fontSize:11,color:"#8b949e"}},`Vence: ${task.due}`)
+            ),
+            React.createElement(PriorityPill,{priority:task.priority}),
+            React.createElement(StatusPill,{status:task.status})
+          )
+        )
+      )
+    );
+  };
+
+  const AgendaView=()=>{
+    const filters=["Todas","Pendentes","Urgentes","Concluídas","Atrasadas","Manutenção","Solicitação","Aviso"];
+    return React.createElement("div",null,
+      React.createElement("div",{className:"filter-bar"},
+        filters.map(f=>React.createElement("button",{key:f,className:`filter-btn${filter===f?" active":""}`,onClick:()=>setFilter(f)},
+          f,f==="Todas"&&myTasks.length>0?` (${myTasks.length})`:"",
+          f==="Pendentes"&&stats.pending>0?` (${stats.pending})`:"",
+          f==="Urgentes"&&(stats.urgent+stats.critical)>0?` (${stats.urgent+stats.critical})`:"",
+        ))
+      ),
+      sortedTasks.length===0?
+      React.createElement("div",{className:"empty-state"},
+        React.createElement("div",{className:"empty-icon"},"📭"),
+        React.createElement("div",{style:{fontWeight:600,color:"#e6edf3"}},"Nenhuma tarefa encontrada"),
+        React.createElement("div",{style:{fontSize:12}},"Tente mudar o filtro ou crie uma nova tarefa")
+      ):
+      sortedTasks.map(task=>{
+        const statusColor=STATUS_CONFIG[task.status]?.color||"#6e7681";
+        const isCritical=task.priority==="Crítica";
+        const isUnread=task.to.includes(currentUserId)&&!task.viewed.some(v=>v.userId===currentUserId);
+        const fromUser=USERS.find(u=>u.id===task.from);
+        const toUsers=task.to.map(id=>USERS.find(u=>u.id===id)).filter(Boolean);
+        return React.createElement("div",{key:task.id,className:`task-card${isCritical?" critical-blink":""}`,onClick:()=>handleTaskClick(task)},
+          React.createElement("div",{className:"task-accent",style:{background:statusColor}}),
+          React.createElement("div",{className:"task-inner"},
+            React.createElement("div",{className:"task-header"},
+              React.createElement("div",{className:"task-title"},isUnread&&React.createElement("span",{className:"badge-unread"}),task.title),
+              React.createElement(PriorityPill,{priority:task.priority})
+            ),
+            task.desc&&React.createElement("div",{className:"task-desc"},task.desc.substring(0,80)+(task.desc.length>80?"...":"")),
+            React.createElement("div",{className:"task-footer"},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                React.createElement("span",{style:{fontSize:10,color:"#8b949e"}},"De:"),
+                fromUser&&React.createElement(Avatar,{user:fromUser,size:18}),
+                React.createElement("span",{style:{fontSize:11,color:"#8b949e"}}),
+                React.createElement("span",{style:{fontSize:10,color:"#8b949e",marginLeft:4}},"→"),
+                toUsers.slice(0,3).map(u=>React.createElement(Avatar,{key:u.id,user:u,size:18})),
+                task.to.length>3&&React.createElement("span",{style:{fontSize:10,color:"#8b949e"}},`+${task.to.length-3}`)
+              ),
+              React.createElement("div",{style:{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}},
+                React.createElement("span",{style:{fontSize:11,color:task.due===d(0)?"#f85149":"#8b949e"}},"⏰ "+task.due),
+                task.comments.length>0&&React.createElement("span",{style:{fontSize:11,color:"#8b949e"}},"💬 "+task.comments.length),
+                React.createElement(StatusPill,{status:task.status})
+              )
+            )
+          )
+        );
+      })
+    );
+  };
+
+  const CalendarView=()=>{
+    const days=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+    const today=new Date();
+    const firstDay=new Date(today.getFullYear(),today.getMonth(),1);
+    const daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+    const startPad=firstDay.getDay();
+    const cells=[];
+    for(let i=0;i<startPad;i++)cells.push(null);
+    for(let i=1;i<=daysInMonth;i++)cells.push(i);
+    const tasksByDay={};
+    myTasks.forEach(t=>{
+      const parts=t.due.split("/");
+      if(parts.length===3){const day=parseInt(parts[0]);if(!tasksByDay[day])tasksByDay[day]=[];tasksByDay[day].push(t);}
+    });
+    return React.createElement("div",null,
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+        React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"#e6edf3"}},
+          today.toLocaleString("pt-BR",{month:"long",year:"numeric"}).replace(/^\w/,c=>c.toUpperCase())
+        )
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}},
+        days.map(d=>React.createElement("div",{key:d,style:{fontSize:11,fontWeight:600,color:"#8b949e",textAlign:"center",padding:"4px 0"}},d))
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}},
+        cells.map((day,i)=>{
+          const isToday=day===today.getDate();
+          const dayTasks=day?tasksByDay[day]||[]:[];
+          return React.createElement("div",{key:i,style:{minHeight:64,background:day?"#161b22":"transparent",borderRadius:6,border:day?isToday?"1px solid #388bfd":"1px solid #21262d":"none",padding:4,position:"relative"}},
+            day&&React.createElement("div",{style:{fontSize:12,fontWeight:isToday?700:400,color:isToday?"#388bfd":"#8b949e",marginBottom:2}},day),
+            dayTasks.slice(0,2).map((t,ti)=>React.createElement("div",{key:ti,style:{fontSize:10,background:STATUS_CONFIG[t.status]?.bg||"#6e768122",color:STATUS_CONFIG[t.status]?.color||"#6e7681",borderRadius:3,padding:"1px 4px",marginBottom:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"},onClick:()=>handleTaskClick(t)},t.title.substring(0,14)+"…")),
+            dayTasks.length>2&&React.createElement("div",{style:{fontSize:10,color:"#8b949e"}},`+${dayTasks.length-2}`)
+          );
+        })
+      )
+    );
+  };
+
+  const TaskDetailModal=({task,onClose})=>{
+    const fromUser=USERS.find(u=>u.id===task.from);
+    const toUsers=task.to.map(id=>USERS.find(u=>u.id===id)).filter(Boolean);
+    const latestTask=tasks.find(t=>t.id===task.id)||task;
+    const isManager=currentUser.isAdmin||currentUser.isManager;
+    const statuses=Object.keys(STATUS_CONFIG);
+    return React.createElement("div",{className:"modal-overlay",onClick:e=>{if(e.target===e.currentTarget)onClose();}},
+      React.createElement("div",{className:"modal"},
+        React.createElement("div",{className:"modal-header"},
+          React.createElement("div",{style:{width:4,height:40,borderRadius:2,background:STATUS_CONFIG[latestTask.status]?.color||"#6e7681",flexShrink:0}}),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{className:"modal-title"},latestTask.title),
+            React.createElement("div",{style:{display:"flex",gap:6,marginTop:4}},
+              React.createElement(PriorityPill,{priority:latestTask.priority}),
+              React.createElement("span",{style:{fontSize:11,color:"#8b949e"}},latestTask.category),
+            )
+          ),
+          React.createElement("button",{className:"modal-close",onClick:onClose},"✕")
+        ),
+        React.createElement("div",{className:"modal-body"},
+          React.createElement("div",{className:"detail-grid",style:{marginBottom:12}},
+            React.createElement("div",{className:"detail-item"},
+              React.createElement("div",{className:"detail-item-label"},"Status"),
+              isManager?React.createElement("select",{className:"status-select",value:latestTask.status,onChange:e=>handleStatusChange(task.id,e.target.value)},
+                statuses.map(s=>React.createElement("option",{key:s,value:s},s))
+              ):React.createElement(StatusPill,{status:latestTask.status})
+            ),
+            React.createElement("div",{className:"detail-item"},
+              React.createElement("div",{className:"detail-item-label"},"Prazo"),
+              React.createElement("div",{className:"detail-item-value",style:{color:latestTask.due===d(0)?"#f85149":"#e6edf3"}},latestTask.due,latestTask.due===d(0)?" ⚠️":"")
+            ),
+            React.createElement("div",{className:"detail-item"},
+              React.createElement("div",{className:"detail-item-label"},"De"),
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},fromUser&&React.createElement(Avatar,{user:fromUser,size:20}),React.createElement("div",{className:"detail-item-value"},fromUser?.name))
+            ),
+            React.createElement("div",{className:"detail-item"},
+              React.createElement("div",{className:"detail-item-label"},"Para"),
+              React.createElement("div",{style:{display:"flex",gap:4}},toUsers.slice(0,4).map(u=>React.createElement(Avatar,{key:u.id,user:u,size:20})))
+            )
+          ),
+          latestTask.desc&&React.createElement("div",{style:{background:"#0d1117",borderRadius:6,padding:10,marginBottom:12,fontSize:12,color:"#c9d1d9",lineHeight:1.6}},latestTask.desc),
+          latestTask.viewed.length>0&&React.createElement("div",{style:{marginBottom:12}},
+            React.createElement("div",{className:"detail-label"},"Comprovante de leitura"),
+            latestTask.viewed.map((v,i)=>{const u=USERS.find(x=>x.id===v.userId);return u?React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#8b949e",marginBottom:3}},React.createElement("span",{style:{color:"#3fb950"}}),"✓",React.createElement(Avatar,{user:u,size:16}),u.name," — ",v.at):null;})
+          ),
+          React.createElement("div",{style:{marginBottom:12}},
+            React.createElement("div",{className:"detail-label"},"Comentários ({0})".replace("{0}",latestTask.comments.length)),
+            latestTask.comments.length===0&&React.createElement("div",{style:{color:"#8b949e",fontSize:12,padding:8}},"Nenhum comentário ainda."),
+            latestTask.comments.map((c,i)=>{const u=USERS.find(x=>x.id===c.userId);return React.createElement("div",{key:i,className:"comment-box"},React.createElement("div",{className:"comment-header"},u&&React.createElement(Avatar,{user:u,size:18}),React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#e6edf3"}}),u?.name,React.createElement("span",{className:"comment-time"},c.time)),React.createElement("div",{className:"comment-text"},c.text));}),
+            React.createElement("div",{className:"comment-input-row",style:{marginTop:8}},
+              React.createElement("textarea",{className:"comment-input",placeholder:"Adicionar comentário ou atualização...",value:newComment,onChange:e=>setNewComment(e.target.value)}),
+              React.createElement("button",{className:"btn-primary",onClick:()=>handleAddComment(task.id),style:{height:50,alignSelf:"stretch"}},"Enviar")
+            )
+          ),
+          React.createElement("div",null,
+            React.createElement("div",{className:"detail-label"},"Histórico de ações"),
+            [...latestTask.history].reverse().map((h,i)=>React.createElement("div",{key:i,className:"history-item"},React.createElement("div",{className:"history-dot"}),React.createElement("div",null,React.createElement("div",{className:"history-text"},h.action),React.createElement("div",{style:{fontSize:10,color:"#6e7681"}},h.at))))
+          )
+        ),
+        React.createElement("div",{className:"modal-footer"},
+          isManager&&!["Concluída","Cancelada"].includes(latestTask.status)&&React.createElement("button",{className:"cobrar-btn",onClick:()=>handleCobrar(task.id)},"⚡ Cobrar atualização"),
+          React.createElement("button",{className:"btn-ghost",onClick:onClose},"Fechar")
+        )
+      )
+    );
+  };
+
+  const CreateModal=()=>{
+    return React.createElement("div",{className:"modal-overlay",onClick:e=>{if(e.target===e.currentTarget)setShowCreate(false);}},
+      React.createElement("div",{className:"modal"},
+        React.createElement("div",{className:"modal-header"},
+          React.createElement("div",{className:"modal-title"},"Nova Tarefa / Pendência"),
+          React.createElement("button",{className:"modal-close",onClick:()=>setShowCreate(false)},"✕")
+        ),
+        React.createElement("div",{className:"modal-body"},
+          React.createElement("div",{className:"form-group"},
+            React.createElement("label",{className:"form-label"},"Título *"),
+            React.createElement("input",{className:"form-input",placeholder:"Descreva a tarefa ou pendência...",value:createForm.title,onChange:e=>setCreateForm(p=>({...p,title:e.target.value}))})
+          ),
+          React.createElement("div",{className:"form-group"},
+            React.createElement("label",{className:"form-label"},"Descrição"),
+            React.createElement("textarea",{className:"form-textarea",placeholder:"Detalhes adicionais, instruções ou contexto...",value:createForm.desc,onChange:e=>setCreateForm(p=>({...p,desc:e.target.value}))})
+          ),
+          React.createElement("div",{className:"form-row"},
+            React.createElement("div",{className:"form-group"},
+              React.createElement("label",{className:"form-label"},"Prioridade"),
+              React.createElement("select",{className:"form-select",value:createForm.priority,onChange:e=>setCreateForm(p=>({...p,priority:e.target.value}))},
+                Object.keys(PRIORITY_CONFIG).map(p=>React.createElement("option",{key:p,value:p},p))
+              )
+            ),
+            React.createElement("div",{className:"form-group"},
+              React.createElement("label",{className:"form-label"},"Categoria"),
+              React.createElement("select",{className:"form-select",value:createForm.category,onChange:e=>setCreateForm(p=>({...p,category:e.target.value}))},
+                ["Manutenção","Solicitação","Aviso","Reunião","Peças","Treinamento"].map(c=>React.createElement("option",{key:c,value:c},c))
+              )
+            )
+          ),
+          React.createElement("div",{className:"form-row"},
+            React.createElement("div",{className:"form-group"},
+              React.createElement("label",{className:"form-label"},"Destinatário"),
+              React.createElement("select",{className:"form-select",value:createForm.toType,onChange:e=>setCreateForm(p=>({...p,toType:e.target.value}))},
+                [{v:"user",l:"Usuário específico"},{v:"all",l:"Todos os usuários"},{v:"managers",l:"Apenas gestores"},{v:"engineers",l:"Apenas engenheiros"}].map(o=>React.createElement("option",{key:o.v,value:o.v},o.l))
+              )
+            ),
+            createForm.toType==="user"&&React.createElement("div",{className:"form-group"},
+              React.createElement("label",{className:"form-label"},"Selecionar usuário"),
+              React.createElement("select",{className:"form-select",value:createForm.toUser,onChange:e=>setCreateForm(p=>({...p,toUser:e.target.value}))},
+                USERS.filter(u=>u.id!==currentUserId).map(u=>React.createElement("option",{key:u.id,value:u.id},`${u.name} (${u.role})`))
+              )
+            ),
+            createForm.toType!=="user"&&React.createElement("div",{className:"form-group"},
+              React.createElement("label",{className:"form-label"},"Prazo"),
+              React.createElement("input",{type:"text",className:"form-input",placeholder:`Ex: ${d(7)}`,value:createForm.due,onChange:e=>setCreateForm(p=>({...p,due:e.target.value}))})
+            )
+          ),
+          createForm.toType==="user"&&React.createElement("div",{className:"form-group"},
+            React.createElement("label",{className:"form-label"},"Prazo"),
+            React.createElement("input",{type:"text",className:"form-input",placeholder:`Ex: ${d(7)}`,value:createForm.due,onChange:e=>setCreateForm(p=>({...p,due:e.target.value}))})
+          )
+        ),
+        React.createElement("div",{className:"modal-footer"},
+          React.createElement("button",{className:"btn-ghost",onClick:()=>setShowCreate(false)},"Cancelar"),
+          React.createElement("button",{className:"btn-primary",onClick:handleCreate},
+            React.createElement("span",null,"✓"),"Criar tarefa"
+          )
+        )
+      )
+    );
+  };
+
+  const viewTitles={dashboard:"Dashboard",agenda:"Minha Agenda",calendar:"Calendário"};
+
+  return React.createElement("div",{style:{display:"contents"}},
+    sidebarEl,
+    React.createElement("div",{className:"main",style:{position:"relative"}},
+      React.createElement("div",{className:"topbar"},
+        React.createElement("div",{className:"topbar-title"},viewTitles[view]||""),
+        React.createElement("div",{className:"topbar-actions"},
+          React.createElement("button",{className:"btn-primary",onClick:()=>setShowCreate(true)},
+            React.createElement("span",{style:{fontSize:16,lineHeight:1}},"＋"),"Nova tarefa"
+          ),
+          React.createElement("button",{className:"notif-btn",onClick:()=>setShowNotifs(v=>!v)},
+            "🔔",unreadNotifs>0&&React.createElement("span",{className:"notif-dot"})
+          )
+        )
+      ),
+      showNotifs&&React.createElement("div",{className:"notif-panel"},
+        React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid #21262d",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#e6edf3"}},"Notificações"),
+          React.createElement("button",{className:"btn-ghost",style:{fontSize:11,padding:"2px 6px"},onClick:()=>{setNotifs(p=>p.map(n=>({...n,read:true})));setShowNotifs(false)}},"Marcar tudo")
+        ),
+        notifs.length===0?React.createElement("div",{style:{padding:14,color:"#8b949e",fontSize:12}},"Nenhuma notificação"):
+        notifs.map(n=>React.createElement("div",{key:n.id,className:"notif-item",onClick:()=>{setNotifs(p=>p.map(x=>x.id===n.id?{...x,read:true}:x));setShowNotifs(false);}},
+          React.createElement("div",{className:"notif-item-title"},!n.read&&React.createElement("span",{className:"notif-dot-item",style:{background:"#388bfd"}}),n.title),
+          React.createElement("div",{className:"notif-item-sub"},n.sub)
+        ))
+      ),
+      React.createElement("div",{className:"content"},
+        view==="dashboard"&&React.createElement(DashboardView),
+        view==="agenda"&&React.createElement(AgendaView),
+        view==="calendar"&&React.createElement(CalendarView),
+      ),
+      showCreate&&React.createElement(CreateModal),
+      selectedTask&&React.createElement(TaskDetailModal,{task:selectedTask,onClose:()=>setSelectedTask(null)})
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app-root")).render(React.createElement(App));
+</script>

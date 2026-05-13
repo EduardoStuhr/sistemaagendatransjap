@@ -1,0 +1,38 @@
+# ── Dependências ──────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# ── Variáveis de ambiente (NUNCA commitar) ────────────
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# ── Banco de dados ────────────────────────────────────
+**/*.db
+**/*.db-journal
+**/*.db-shm
+**/*.db-wal
+**/dev.db
+
+# ── Build ─────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
+
+# ── Logs ─────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+
+# ── OS ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ── Uploads temporários ───────────────────────────────
+uploads/
+tmp/
