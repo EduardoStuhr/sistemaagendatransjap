@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
+<<<<<<< HEAD
   LayoutDashboard, ClipboardList, Calendar, Wrench, Truck, Package,
+=======
+  LayoutDashboard, ClipboardList, Calendar, Wrench, Truck,
+>>>>>>> a714785db76b4fc0b82c23b2de64b574e05a4400
   ChevronLeft, ChevronRight, Clock, AlertCircle, AlertTriangle,
   LogOut, UserCircle, Receipt,
 } from 'lucide-react';
@@ -10,6 +14,7 @@ import { Avatar } from '../ui/Avatar.jsx';
 import logo from '../../assets/logo.png';
 
 const NAV = [
+<<<<<<< HEAD
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard'    },
   { to: '/agenda',       icon: ClipboardList,   label: 'Agenda'       },
   { to: '/manutencao',   icon: Wrench,          label: 'Manutenção'   },
@@ -17,6 +22,14 @@ const NAV = [
   { to: '/pecas',        icon: Package,         label: 'Peças'        },
   { to: '/calendar',     icon: Calendar,        label: 'Calendário'   },
   { to: '/despesas',     icon: Receipt,         label: 'Despesas'     },
+=======
+  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard'          },
+  { to: '/agenda',       icon: ClipboardList,   label: 'Minha Agenda'       },
+  { to: '/manutencao',   icon: Wrench,          label: 'Manutenção & Peças' },
+  { to: '/equipamentos', icon: Truck,           label: 'Equipamentos'       },
+  { to: '/calendar',     icon: Calendar,        label: 'Calendário'         },
+  { to: '/despesas',     icon: Receipt,         label: 'Despesas'           },
+>>>>>>> a714785db76b4fc0b82c23b2de64b574e05a4400
 ];
 
 const QUICK_AGENDA = [
